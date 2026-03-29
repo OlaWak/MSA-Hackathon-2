@@ -187,6 +187,14 @@ def queue_patch(patient_id: int, updates: dict) -> bool:
                 return True
         return False
 
+
+def finalize_patient_row(patient_id: int | None, row: dict) -> tuple[dict, bool]:
+    """Update an existing draft patient row when possible, otherwise create a new row."""
+    if patient_id and queue_patch(patient_id, row):
+        return {"id": patient_id, **row}, False
+    saved = queue_add(row)
+    return saved, True
+
 # ─────────────────────────────────────────────────────────────
 # ROUTES
 # ─────────────────────────────────────────────────────────────
@@ -206,28 +214,45 @@ def ping():
 def scan_card():
     """Extract patient name + health ID from health card image."""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         b64_image = data.get("image", "")
+        patient_id = data.get("patient_id")
 
-        if not b64_image or not model:
-            return jsonify({"name": "Unknown", "health_id": "N/A"})
+        if not b64_image:
+            return jsonify({"name": "Unknown", "health_id": "N/A", "patient_id": patient_id})
 
-        image_bytes = base64.b64decode(b64_image)
-        image_part = {"mime_type": "image/jpeg", "data": image_bytes}
+        result = {"name": "Unknown", "health_id": "N/A"}
 
-        prompt = (
-            "This is a health card or government ID. "
-            "Extract the full name and the health card number or ID number. "
-            "Reply ONLY with valid JSON, no markdown or backticks:\n"
-            '{"name": "Full Name", "health_id": "1234567890"}\n'
-            'If not found, use "Unknown" for name and "N/A" for health_id.'
+        if model:
+            image_bytes = base64.b64decode(b64_image)
+            image_part = {"mime_type": "image/jpeg", "data": image_bytes}
+
+            prompt = (
+                "This is a health card or government ID. "
+                "Extract the full name and the health card number or ID number. "
+                "Reply ONLY with valid JSON, no markdown or backticks:\n"
+                '{"name": "Full Name", "health_id": "1234567890"}\n'
+                'If not found, use "Unknown" for name and "N/A" for health_id.'
+            )
+
+            response = model.generate_content([prompt, image_part])
+            raw = response.text.strip().replace("```json", "").replace("```", "")
+            result = json.loads(raw)
+
+        saved, created = finalize_patient_row(
+            int(patient_id) if patient_id else None,
+            {
+                "name": result.get("name", "Unknown") or "Unknown",
+                "health_id": result.get("health_id", "N/A") or "N/A",
+                "lang": data.get("lang", "en"),
+                "age_group": data.get("age_group", "Adult"),
+                "status": "draft",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            },
         )
+        result["patient_id"] = saved.get("id")
 
-        response = model.generate_content([prompt, image_part])
-        raw = response.text.strip().replace("```json", "").replace("```", "")
-        result = json.loads(raw)
-
-        print(f"[/scan-card] Extracted: {result}")
+        print(f"[/scan-card] {'Created' if created else 'Updated'} draft {saved.get('id')}: {result}")
         return jsonify(result)
 
     except Exception as e:
@@ -276,10 +301,9 @@ def speak():
 def score_priority():
     """Deterministic CTAS scoring from yes/no symptom answers."""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         answers = data.get("answers", {})
         age_group = data.get("age_group", "Adult")
-
         result = score_answers(answers, age_group)
         print(f"[/score-priority] → Priority {result['priority']} ({result['level']})")
         return jsonify(result)
@@ -293,7 +317,7 @@ def score_priority():
 def triage_ai():
     """AI-powered CTAS triage using Gemini. Falls back to deterministic scoring."""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         answers = data.get("answers", {})
         age_group = data.get("age_group", "Adult")
         body_part = data.get("body_part", "")
@@ -351,9 +375,10 @@ def get_questions(body_part):
 def queue_post():
     """Add a new patient to the queue after kiosk check-in."""
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         answers = data.get("answers", {})
         age_group = data.get("age_group", "Adult")
+        patient_id = data.get("patient_id")
 
         # Score priority
         scoring = score_answers(answers, age_group)
@@ -386,8 +411,8 @@ def queue_post():
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
-        saved = queue_add(row)
-        print(f"[/queue POST] Added: {row['name']} → Priority {scoring['priority']}")
+        saved, created = finalize_patient_row(int(patient_id) if patient_id else None, row)
+        print(f"[/queue POST] {'Added' if created else 'Updated'}: {row['name']} → Priority {scoring['priority']}")
         return jsonify({"success": True, "id": saved.get("id"), "ai_priority": scoring["priority"]}), 201
 
     except Exception as e:

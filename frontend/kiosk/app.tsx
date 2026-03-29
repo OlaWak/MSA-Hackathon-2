@@ -9,8 +9,11 @@ const AI_SERVER = process.env.NEXT_PUBLIC_AI_SERVER || "http://localhost:5001"
 // ── Brand Colors ───────────────────────────────────────────────
 const C = {
     blue: "#2563EB", blueDark: "#1D4ED8", blueLight: "#EFF6FF",
+    pink: "#EC4899", pinkDark: "#DB2777", pinkLight: "#FCE7F3",
+    sky: "#38BDF8", skyDark: "#0284C7", skyLight: "#E0F2FE",
     slate: "#334155", gray: "#64748B", lightGray: "#F1F5F9",
     border: "#E2E8F0", white: "#FFFFFF", red: "#EF4444", green: "#22C55E",
+    kidBorder: "#F9A8D4",
 }
 
 // ── Languages ──────────────────────────────────────────────────
@@ -152,6 +155,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "Hear question aloud",
         startNewCheckin: "Start New Check-in",
         ageDetected: "{age} detected",
+        back: "Back",
     },
     fr: {
         connectingPiCamera: "Connexion a la camera Pi...",
@@ -205,6 +209,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "Lire la question",
         startNewCheckin: "Commencer un nouvel enregistrement",
         ageDetected: "{age} detecte",
+        back: "Retour",
     },
     ar: {
         connectingPiCamera: "جار الاتصال بكاميرا Pi...",
@@ -258,6 +263,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "استمع إلى السؤال",
         startNewCheckin: "ابدأ تسجيلا جديدا",
         ageDetected: "تم اكتشاف {age}",
+        back: "رجوع",
     },
     pa: {
         connectingPiCamera: "Pi ਕੈਮਰੇ ਨਾਲ ਜੁੜਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
@@ -311,6 +317,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "ਸਵਾਲ ਸੁਣੋ",
         startNewCheckin: "ਨਵਾਂ ਚੈੱਕ-ਇਨ ਸ਼ੁਰੂ ਕਰੋ",
         ageDetected: "{age} ਮਿਲਿਆ",
+        back: "ਵਾਪਸ",
     },
     zh: {
         connectingPiCamera: "正在连接 Pi 摄像头...",
@@ -364,6 +371,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "朗读问题",
         startNewCheckin: "开始新的登记",
         ageDetected: "已检测到 {age}",
+        back: "返回",
     },
     es: {
         connectingPiCamera: "Conectando a la camara Pi...",
@@ -417,6 +425,7 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         playQuestionTitle: "Escuchar la pregunta",
         startNewCheckin: "Comenzar nuevo registro",
         ageDetected: "Se detecto {age}",
+        back: "Atras",
     },
 }
 
@@ -590,19 +599,217 @@ function Logo({ size = 28 }: { size?: number }) {
 }
 
 // ── Progress Bar ───────────────────────────────────────────────
-function ProgressBar({ step, total }: { step: number; total: number }) {
+function ProgressBar({
+    step,
+    total,
+    kidMode = false,
+}: {
+    step: number
+    total: number
+    kidMode?: boolean
+}) {
     return (
         <div style={{ marginBottom: 8 }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6, fontSize: 13, color: C.gray }}>
+            <div style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginBottom: 6,
+                fontSize: 13,
+                color: kidMode ? C.pinkDark : C.gray,
+            }}>
                 <span style={{ fontWeight: 500 }}>{step} / {total}</span>
             </div>
-            <div style={{ height: 6, background: C.border, borderRadius: 99, overflow: "hidden" }}>
+            <div style={{
+                height: 6,
+                background: kidMode ? C.pinkLight : C.border,
+                borderRadius: 99,
+                overflow: "hidden",
+            }}>
                 <div style={{
                     height: "100%", width: `${(step / total) * 100}%`,
-                    background: `linear-gradient(90deg, ${C.blue} 0%, #60A5FA 100%)`,
+                    background: kidMode
+                        ? `linear-gradient(90deg, ${C.pink} 0%, ${C.sky} 100%)`
+                        : `linear-gradient(90deg, ${C.blue} 0%, #60A5FA 100%)`,
                     borderRadius: 99, transition: "width 0.4s ease",
                 }} />
             </div>
+        </div>
+    )
+}
+
+function KidGraphicBanner({
+    title,
+    subtitle,
+    badge,
+    step,
+    total,
+    variant = 0,
+}: {
+    title?: string
+    subtitle?: string
+    badge?: string
+    step?: number
+    total?: number
+    variant?: number
+}) {
+    const tilt = ["8deg", "-10deg", "6deg"][variant % 3]
+    const offset = [0, 6, -4][variant % 3]
+
+    return (
+        <div style={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 24,
+            padding: "20px 22px",
+            marginBottom: 16,
+            background: `linear-gradient(135deg, ${C.pinkLight} 0%, ${C.white} 52%, ${C.skyLight} 100%)`,
+            border: `1.5px solid ${C.kidBorder}`,
+            boxShadow: "0 10px 28px rgba(236,72,153,0.12), 0 8px 20px rgba(56,189,248,0.10)",
+        }}>
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                <div style={{
+                    position: "absolute",
+                    top: 16,
+                    left: 16,
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: C.pink,
+                    opacity: 0.85,
+                }} />
+                <div style={{
+                    position: "absolute",
+                    top: 18,
+                    right: 24,
+                    width: 46,
+                    height: 12,
+                    borderRadius: 999,
+                    background: C.sky,
+                    transform: `rotate(${tilt})`,
+                    opacity: 0.95,
+                }} />
+                <div style={{
+                    position: "absolute",
+                    bottom: 14,
+                    left: 28 + offset,
+                    width: 52,
+                    height: 18,
+                    borderRadius: 999,
+                    background: C.skyLight,
+                    border: `2px solid ${C.sky}`,
+                }} />
+                <div style={{
+                    position: "absolute",
+                    right: 22,
+                    bottom: 14,
+                    width: 34,
+                    height: 34,
+                    borderRadius: 12,
+                    background: C.white,
+                    border: `4px solid ${C.pink}`,
+                    transform: `rotate(${-8 - offset}deg)`,
+                }} />
+                <div style={{
+                    position: "absolute",
+                    right: 68,
+                    bottom: 28,
+                    width: 18,
+                    height: 18,
+                    background: C.pinkDark,
+                    clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 67% 57%, 79% 91%, 50% 70%, 21% 91%, 33% 57%, 2% 35%, 39% 35%)",
+                    opacity: 0.9,
+                }} />
+            </div>
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18 }}>
+                <div style={{ maxWidth: "72%" }}>
+                    {badge && (
+                        <span style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "6px 12px",
+                            borderRadius: 999,
+                            marginBottom: 10,
+                            background: C.white,
+                            border: `1px solid ${C.kidBorder}`,
+                            color: C.pinkDark,
+                            fontSize: 12,
+                            fontWeight: 800,
+                            letterSpacing: 0.3,
+                            textTransform: "uppercase",
+                        }}>
+                            {badge}
+                        </span>
+                    )}
+                    {title && (
+                        <div style={{ fontSize: 22, fontWeight: 700, color: C.slate, lineHeight: 1.25 }}>
+                            {title}
+                        </div>
+                    )}
+                    {subtitle && (
+                        <div style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5, color: C.gray }}>
+                            {subtitle}
+                        </div>
+                    )}
+                </div>
+                <div style={{ position: "relative", width: 84, height: 72, flexShrink: 0 }}>
+                    <div style={{
+                        position: "absolute",
+                        top: 4,
+                        left: 10,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: C.sky,
+                    }} />
+                    <div style={{
+                        position: "absolute",
+                        top: 18,
+                        left: 30,
+                        width: 34,
+                        height: 34,
+                        borderRadius: 14,
+                        background: C.white,
+                        border: `4px solid ${C.sky}`,
+                        transform: `rotate(${6 + offset}deg)`,
+                    }} />
+                    <div style={{
+                        position: "absolute",
+                        right: 4,
+                        top: 10,
+                        width: 18,
+                        height: 18,
+                        background: C.pinkDark,
+                        clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 67% 57%, 79% 91%, 50% 70%, 21% 91%, 33% 57%, 2% 35%, 39% 35%)",
+                    }} />
+                    <div style={{
+                        position: "absolute",
+                        right: 10,
+                        bottom: 0,
+                        width: 44,
+                        height: 14,
+                        borderRadius: 999,
+                        background: C.pink,
+                        transform: `rotate(${tilt})`,
+                    }} />
+                </div>
+            </div>
+            {(step && total) ? (
+                <div style={{
+                    position: "relative",
+                    marginTop: 14,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "7px 12px",
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,0.92)",
+                    border: `1px solid ${C.kidBorder}`,
+                    color: C.skyDark,
+                    fontSize: 13,
+                    fontWeight: 700,
+                }}>
+                    {step} / {total}
+                </div>
+            ) : null}
         </div>
     )
 }
@@ -1375,6 +1582,38 @@ function CameraSpinner() {
     )
 }
 
+function BackButton({
+    label,
+    onClick,
+    rtl,
+    disabled = false,
+    fontScale = 1,
+}: {
+    label: string
+    onClick: () => void
+    rtl?: boolean
+    disabled?: boolean
+    fontScale?: number
+}) {
+    return (
+        <div style={{ display: "flex", justifyContent: rtl ? "flex-end" : "flex-start", marginBottom: 16 }}>
+            <button
+                onClick={onClick}
+                disabled={disabled}
+                style={{
+                    ...btn("transparent", disabled ? "#94A3B8" : C.slate, `1px solid ${C.border}`),
+                    width: "auto",
+                    padding: `${Math.round(10 * fontScale)}px ${Math.round(18 * fontScale)}px`,
+                    fontSize: Math.round(17 * fontScale),
+                    opacity: disabled ? 0.65 : 1,
+                }}
+            >
+                {label}
+            </button>
+        </div>
+    )
+}
+
 // ── Main App ───────────────────────────────────────────────────
 type Step = "language" | "camera" | "age" | "card" | "questions" | "complete"
 
@@ -1389,9 +1628,13 @@ export default function KioskApp() {
     const [manualId, setManualId] = useState("")
     const [patientName, setPatientName] = useState("")
     const [healthId, setHealthId] = useState("")
+    const [patientId, setPatientId] = useState<number | null>(null)
     const [qIndex, setQIndex] = useState(0)
     const [answers, setAnswers] = useState<Record<string, boolean>>({})
     const [submitting, setSubmitting] = useState(false)
+    const historyReadyRef = useRef(false)
+    const popNavigationRef = useRef(false)
+    const lastHistoryViewRef = useRef("")
 
     const t = {
         ...(T.en || {}),
@@ -1400,7 +1643,31 @@ export default function KioskApp() {
         ...(EXTRA_T[lang] || {}),
     }
     const isRTL = LANGUAGES.find(l => l.code === lang)?.dir === "rtl"
-    const fs = ageGroup === "Senior" ? 1.15 : 1
+    const fs = ageGroup === "Senior" ? 1.28 : 1
+    const isKidMode = ageGroup === "Child"
+    const scale = (size: number) => Math.round(size * fs)
+    const primaryAction = isKidMode ? C.pink : C.blue
+    const secondaryAction = isKidMode ? C.sky : "#334155"
+    const subtleAction = isKidMode ? C.skyDark : C.gray
+    const outlineBorder = `1.5px solid ${isKidMode ? C.kidBorder : C.border}`
+    const kidCardStyle: React.CSSProperties = isKidMode ? {
+        border: `1.5px solid ${C.kidBorder}`,
+        boxShadow: "0 10px 26px rgba(236,72,153,0.10), 0 10px 22px rgba(56,189,248,0.10)",
+        background: "linear-gradient(180deg, #FFFFFF 0%, #FFF8FC 100%)",
+    } : {}
+    const themedCard = (extra: React.CSSProperties = {}): React.CSSProperties => ({
+        ...card,
+        ...kidCardStyle,
+        ...extra,
+    })
+    const actionBtn = (bg: string, color = "#fff", border = "none"): React.CSSProperties => ({
+        ...btn(bg, color, border),
+        fontSize: scale(17),
+        padding: `${Math.round(16 * fs)}px ${Math.round(24 * fs)}px`,
+    })
+    const outlineBtn = (color = subtleAction): React.CSSProperties =>
+        actionBtn(isKidMode ? C.white : "transparent", color, outlineBorder)
+    const backDisabled = step === "card" && scanningCard
 
     useEffect(() => {
         if (ageGroup && step === "age") setTimeout(() => setStep("card"), 700)
@@ -1416,15 +1683,32 @@ export default function KioskApp() {
         } catch { }
     }
 
+    const discardDraftPatient = async () => {
+        if (patientId == null) return
+
+        const draftId = patientId
+        setPatientId(null)
+
+        try {
+            await fetch(`${AI_SERVER}/queue/${draftId}`, { method: "DELETE" })
+        } catch { }
+    }
+
     const handleCardCapture = async (b64: string) => {
         setScanningCard(true)
         try {
             const res = await fetch(`${AI_SERVER}/scan-card`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: b64 }),
+                body: JSON.stringify({
+                    image: b64,
+                    patient_id: patientId,
+                    lang,
+                    age_group: ageGroup || "Adult",
+                }),
             })
             const d = await res.json()
+            if (typeof d.patient_id === "number") setPatientId(d.patient_id)
             setPatientName(d.name !== "Unknown" ? d.name : "")
             setHealthId(d.health_id !== "N/A" ? d.health_id : "")
         } catch { }
@@ -1450,6 +1734,7 @@ export default function KioskApp() {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        patient_id: patientId,
                         name: patientName || manualName || "Unknown",
                         health_id: healthId || manualId || "N/A",
                         lang,
@@ -1464,10 +1749,102 @@ export default function KioskApp() {
     }
 
     const reset = () => {
+        if (step !== "complete") {
+            void discardDraftPatient()
+        } else {
+            setPatientId(null)
+        }
         setStep("language"); setLang("en"); setCameraMode(null); setAgeGroup(null)
         setManualName(""); setManualId(""); setPatientName(""); setHealthId("")
         setQIndex(0); setAnswers({}); setCardMode("scan"); setScanningCard(false)
     }
+
+    const getHistoryView = () => {
+        if (step === "card") return cardMode === "manual" ? "card-manual" : "card-scan"
+        if (step === "questions" || step === "complete") return "locked"
+        return step
+    }
+
+    const goBack = () => {
+        if (backDisabled) return false
+
+        if (step === "card" && cardMode === "manual") {
+            setCardMode("scan")
+            return true
+        }
+
+        if (step === "card") {
+            void discardDraftPatient()
+            setPatientName("")
+            setHealthId("")
+            setCardMode("scan")
+            setAgeGroup(null)
+            setStep("age")
+            return true
+        }
+
+        if (step === "age") {
+            setAgeGroup(null)
+            setStep("camera")
+            return true
+        }
+
+        if (step === "camera") {
+            setCameraMode(null)
+            setAgeGroup(null)
+            setCardMode("scan")
+            setStep("language")
+            return true
+        }
+
+        return false
+    }
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        const view = getHistoryView()
+
+        if (!historyReadyRef.current) {
+            window.history.replaceState({ kioskView: view }, "")
+            historyReadyRef.current = true
+            lastHistoryViewRef.current = view
+            return
+        }
+
+        if (popNavigationRef.current) {
+            popNavigationRef.current = false
+            lastHistoryViewRef.current = view
+            return
+        }
+
+        if (view === lastHistoryViewRef.current) return
+
+        window.history.pushState({ kioskView: view }, "")
+        lastHistoryViewRef.current = view
+    }, [step, cardMode])
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+
+        const onPopState = () => {
+            if (step === "questions" || step === "complete") {
+                const lockedView = getHistoryView()
+                window.history.pushState({ kioskView: lockedView }, "")
+                lastHistoryViewRef.current = lockedView
+                return
+            }
+
+            popNavigationRef.current = true
+
+            if (!goBack()) {
+                popNavigationRef.current = false
+            }
+        }
+
+        window.addEventListener("popstate", onPopState)
+        return () => window.removeEventListener("popstate", onPopState)
+    }, [step, cardMode, backDisabled])
 
     if (step === "language") return (
         <Screen rtl={isRTL}>
@@ -1502,6 +1879,7 @@ export default function KioskApp() {
 
     if (step === "camera") return (
         <Screen rtl={isRTL}>
+            <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
             <div style={{ ...card, textAlign: "center", marginBottom: 16 }}>
                 <div style={{
                     width: 52, height: 52, margin: "0 auto 14px",
@@ -1509,10 +1887,10 @@ export default function KioskApp() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     color: C.blue, fontSize: 18, fontWeight: 800,
                 }} />
-                <h2 style={{ fontSize: 22 * fs, fontWeight: 700, color: C.slate, margin: "0 0 10px" }}>
+                <h2 style={{ fontSize: scale(22), fontWeight: 700, color: C.slate, margin: "0 0 10px" }}>
                     {t.cameraModeTitle}
                 </h2>
-                <p style={{ color: C.gray, fontSize: 15, lineHeight: 1.5, margin: 0 }}>
+                <p style={{ color: C.gray, fontSize: scale(15), lineHeight: 1.5, margin: 0 }}>
                     {t.cameraModeDesc}
                 </p>
             </div>
@@ -1528,8 +1906,8 @@ export default function KioskApp() {
                         background: C.blueLight,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.piCameraTitle}</div>
-                    <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: scale(18), fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.piCameraTitle}</div>
+                    <div style={{ fontSize: scale(14), color: C.gray, lineHeight: 1.5 }}>
                         {t.piCameraDesc}
                     </div>
                 </button>
@@ -1543,8 +1921,8 @@ export default function KioskApp() {
                         border: `2px solid ${C.border}`,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.appCameraTitle}</div>
-                    <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: scale(18), fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.appCameraTitle}</div>
+                    <div style={{ fontSize: scale(14), color: C.gray, lineHeight: 1.5 }}>
                         {t.appCameraDesc}
                     </div>
                 </button>
@@ -1553,20 +1931,21 @@ export default function KioskApp() {
     )
 
     if (step === "age") return (
-        <Screen rtl={isRTL}>
-            <div style={{ ...card, textAlign: "center", marginBottom: 16 }}>
+        <Screen rtl={isRTL} kidMode={isKidMode}>
+            <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
+            <div style={themedCard({ textAlign: "center", marginBottom: 16 })}>
                 <div style={{
                     width: 52, height: 52, margin: "0 auto 14px",
-                    borderRadius: 16, background: C.blueLight,
+                    borderRadius: 16, background: isKidMode ? C.pinkLight : C.blueLight,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    color: C.blue, fontSize: 18, fontWeight: 800,
+                    color: isKidMode ? C.pinkDark : C.blue, fontSize: 18, fontWeight: 800,
                 }} />
-                <p style={{ color: C.gray, fontSize: 16 * fs, marginBottom: 8 }}>
+                <p style={{ color: C.gray, fontSize: scale(16), marginBottom: 8 }}>
                     {cameraMode === "pi" ? t.detecting : t.appManualAgeMode}
                 </p>
                 {ageGroup
-                    ? <div style={{ fontSize: 32, fontWeight: 700, color: C.green }}>{translateText(t, "ageDetected", { age: ageGroupLabel(ageGroup, t) })}</div>
-                    : <div style={{ fontSize: 16, fontWeight: 600, color: C.blue, lineHeight: 1.4 }}>
+                    ? <div style={{ fontSize: scale(32), fontWeight: 700, color: isKidMode ? C.pinkDark : C.green }}>{translateText(t, "ageDetected", { age: ageGroupLabel(ageGroup, t) })}</div>
+                    : <div style={{ fontSize: scale(16), fontWeight: 600, color: isKidMode ? C.pinkDark : C.blue, lineHeight: 1.4 }}>
                         {cameraMode === "pi"
                             ? t.launchPiWindowPrompt
                             : t.nextScreenAppCamera}
@@ -1574,46 +1953,55 @@ export default function KioskApp() {
                 }
             </div>
             {!ageGroup && cameraMode === "pi" && (
-                <div style={{ ...card, marginBottom: 16 }}>
+                <div style={themedCard({ marginBottom: 16 })}>
                     <AgeCamera onDetected={setAgeGroup} mode="legacy" t={t} />
                 </div>
             )}
             {!ageGroup && cameraMode === "app" && (
-                <div style={{ ...card, marginBottom: 16, textAlign: "center" }}>
-                    <p style={{ color: C.slate, fontSize: 16, fontWeight: 600, margin: "0 0 8px" }}>
+                <div style={themedCard({ marginBottom: 16, textAlign: "center" })}>
+                    <p style={{ color: C.slate, fontSize: scale(16), fontWeight: 600, margin: "0 0 8px" }}>
                         {t.appNoAutoAge}
                     </p>
-                    <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+                    <p style={{ color: C.gray, fontSize: scale(14), lineHeight: 1.5, margin: 0 }}>
                         {t.appChooseAgeDesc}
                     </p>
                 </div>
             )}
-            <div style={{ ...card }}>
-                <p style={{ textAlign: "center", color: C.gray, marginBottom: 16, fontSize: 14 }}>{t.orManual}</p>
+            <div style={themedCard()}>
+                <p style={{ textAlign: "center", color: C.gray, marginBottom: 16, fontSize: scale(14) }}>{t.orManual}</p>
                 <div style={{ display: "flex", gap: 10 }}>
-                    {(["Child", "Adult", "Senior"] as const).map(g => (
+                    {(["Child", "Adult", "Senior"] as const).map(g => {
+                        const kidSelected = isKidMode && g === "Child" && ageGroup === g
+                        return (
                         <button key={g} onClick={() => setAgeGroup(g)} style={{
                             flex: 1,
-                            background: ageGroup === g ? C.blueLight : C.lightGray,
-                            border: `2px solid ${ageGroup === g ? C.blue : C.border}`,
-                            borderRadius: 12, padding: "14px 8px", cursor: "pointer",
+                            background: ageGroup === g
+                                ? (kidSelected ? `linear-gradient(135deg, ${C.pinkLight} 0%, ${C.skyLight} 100%)` : C.blueLight)
+                                : C.lightGray,
+                            border: `2px solid ${ageGroup === g ? (kidSelected ? C.pink : C.blue) : (isKidMode ? C.kidBorder : C.border)}`,
+                            borderRadius: 12, padding: `${Math.round(14 * fs)}px 8px`, cursor: "pointer",
                             display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                         }}>
                             <span style={{
                                 minWidth: 42, padding: "4px 10px", borderRadius: 999,
-                                background: C.white, color: C.blue, fontSize: 12, fontWeight: 800, letterSpacing: 0.3,
+                                background: C.white,
+                                color: kidSelected ? C.pinkDark : C.blue,
+                                fontSize: scale(12),
+                                fontWeight: 800,
+                                letterSpacing: 0.3,
                             }}>
                                 {g === "Child" ? "0-17" : g === "Adult" ? "18-54" : "55+"}
                             </span>
-                            <span style={{ fontSize: 13 * fs, fontWeight: 600, color: C.slate }}>
+                            <span style={{ fontSize: scale(13), fontWeight: 600, color: C.slate }}>
                                 {t[g.toLowerCase() as keyof typeof t]}
                             </span>
                         </button>
-                    ))}
+                        )
+                    })}
                 </div>
                 <button
                     onClick={() => setStep("camera")}
-                    style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 14 }}
+                    style={{ ...outlineBtn(), marginTop: 14 }}
                 >
                     {t.changeCameraMode}
                 </button>
@@ -1622,37 +2010,49 @@ export default function KioskApp() {
     )
 
     if (step === "card") return (
-        <Screen rtl={isRTL}>
-            <h2 style={{ fontSize: 20 * fs, fontWeight: 700, color: C.slate, marginBottom: 20, textAlign: "center" }}>
-                {t.scanCard}
-            </h2>
-            <p style={{ textAlign: "center", color: C.gray, margin: "0 0 14px", fontSize: 14 }}>
-                {cameraMode === "pi"
-                    ? t.healthCardPiMode
-                    : t.healthCardAppMode}
-            </p>
+        <Screen rtl={isRTL} kidMode={isKidMode}>
+            <BackButton label={t.back} onClick={goBack} rtl={isRTL} disabled={backDisabled} fontScale={fs} />
+            {isKidMode ? (
+                <KidGraphicBanner
+                    badge={t.child}
+                    title={t.scanCard}
+                    subtitle={cameraMode === "pi" ? t.healthCardPiMode : t.healthCardAppMode}
+                    variant={1}
+                />
+            ) : (
+                <>
+                    <h2 style={{ fontSize: scale(20), fontWeight: 700, color: C.slate, marginBottom: 20, textAlign: "center" }}>
+                        {t.scanCard}
+                    </h2>
+                    <p style={{ textAlign: "center", color: C.gray, margin: "0 0 14px", fontSize: scale(14) }}>
+                        {cameraMode === "pi"
+                            ? t.healthCardPiMode
+                            : t.healthCardAppMode}
+                    </p>
+                </>
+            )}
             {cardMode === "scan" ? (
-                <div style={{ ...card, marginBottom: 12 }}>
+                <div style={themedCard({ marginBottom: 12 })}>
                     {cameraMode === "app"
                         ? <BrowserCardCamera onCapture={handleCardCapture} scanning={scanningCard} t={t} />
                         : <LiveCamera onCapture={handleCardCapture} scanning={scanningCard} t={t} />}
                     <button
                         onClick={() => setCardMode("manual")}
-                        style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 4 }}
+                        style={{ ...outlineBtn(), marginTop: 4 }}
                     >
                         {t.enterManual}
                     </button>
                     <button
                         onClick={() => setStep("camera")}
-                        style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 10 }}
+                        style={{ ...outlineBtn(), marginTop: 10 }}
                     >
                         {t.changeCameraMode}
                     </button>
                 </div>
             ) : (
-                <div style={{ ...card, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={themedCard({ display: "flex", flexDirection: "column", gap: 16 })}>
                     <div>
-                        <label style={{ fontSize: 14, fontWeight: 600, color: C.slate, display: "block", marginBottom: 6 }}>
+                        <label style={{ fontSize: scale(14), fontWeight: 600, color: C.slate, display: "block", marginBottom: 6 }}>
                             {t.name}
                         </label>
                         <input
@@ -1660,13 +2060,13 @@ export default function KioskApp() {
                             onChange={e => setManualName(e.target.value)}
                             style={{
                                 width: "100%", padding: "14px 16px", borderRadius: 10,
-                                border: `1.5px solid ${C.border}`, fontSize: 16 * fs,
+                                border: outlineBorder, fontSize: scale(16),
                                 boxSizing: "border-box", outline: "none",
                             }}
                         />
                     </div>
                     <div>
-                        <label style={{ fontSize: 14, fontWeight: 600, color: C.slate, display: "block", marginBottom: 6 }}>
+                        <label style={{ fontSize: scale(14), fontWeight: 600, color: C.slate, display: "block", marginBottom: 6 }}>
                             {t.healthId}
                         </label>
                         <input
@@ -1674,7 +2074,7 @@ export default function KioskApp() {
                             onChange={e => setManualId(e.target.value)}
                             style={{
                                 width: "100%", padding: "14px 16px", borderRadius: 10,
-                                border: `1.5px solid ${C.border}`, fontSize: 16 * fs,
+                                border: outlineBorder, fontSize: scale(16),
                                 boxSizing: "border-box", outline: "none",
                             }}
                         />
@@ -1685,11 +2085,11 @@ export default function KioskApp() {
                             speak(TRIAGE_Q[lang]?.[QUESTION_IDS[0]] || TRIAGE_Q.en[QUESTION_IDS[0]])
                         }}
                         disabled={!manualName || !manualId}
-                        style={btn(manualName && manualId ? C.blue : C.border)}
+                        style={actionBtn(manualName && manualId ? primaryAction : C.border)}
                     >
                         {t.submit}
                     </button>
-                    <button onClick={() => setCardMode("scan")} style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`) }}>
+                    <button onClick={() => setCardMode("scan")} style={{ ...outlineBtn() }}>
                         {t.backToCamera}
                     </button>
                 </div>
@@ -1701,37 +2101,63 @@ export default function KioskApp() {
         const qId = QUESTION_IDS[qIndex]
         const qText = TRIAGE_Q[lang]?.[qId] || TRIAGE_Q.en[qId]
         return (
-            <Screen rtl={isRTL}>
-                <ProgressBar step={qIndex + 1} total={QUESTION_IDS.length} />
-                <div style={{ ...card, marginTop: 16 }}>
+            <Screen rtl={isRTL} kidMode={isKidMode}>
+                <ProgressBar step={qIndex + 1} total={QUESTION_IDS.length} kidMode={isKidMode} />
+                {isKidMode && (
+                    <KidGraphicBanner
+                        badge={t.child}
+                        title={qText}
+                        step={qIndex + 1}
+                        total={QUESTION_IDS.length}
+                        variant={qIndex}
+                    />
+                )}
+                <div style={themedCard({ marginTop: isKidMode ? 12 : 16 })}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 32 }}>
                         <button
                             onClick={() => speak(qText)}
                             style={{
-                                background: C.blue, border: "none", borderRadius: 50,
-                                minWidth: 72, height: 46, cursor: "pointer", flexShrink: 0,
-                                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+                                background: isKidMode
+                                    ? `linear-gradient(135deg, ${C.pink} 0%, ${C.sky} 100%)`
+                                    : C.blue,
+                                border: "none", borderRadius: 50,
+                                minWidth: scale(72), height: scale(46), cursor: "pointer", flexShrink: 0,
+                                display: "flex", alignItems: "center", justifyContent: "center", fontSize: scale(20),
+                                boxShadow: isKidMode ? "0 8px 18px rgba(236,72,153,0.22)" : undefined,
                             }}
                             title={t.playQuestionTitle}
                         >
-                            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{t.play}</span>
+                            <span style={{ color: "#fff", fontSize: scale(14), fontWeight: 700 }}>{t.play}</span>
                         </button>
-                        <p style={{ fontSize: 22 * fs, fontWeight: 600, color: C.slate, lineHeight: 1.4, margin: 0 }}>
-                            {qText}
-                        </p>
+                        {isKidMode ? (
+                            <div style={{ flex: 1, display: "grid", gap: 10 }}>
+                                <div style={{ fontSize: scale(14), fontWeight: 700, color: C.pinkDark }}>
+                                    {t.playQuestionTitle}
+                                </div>
+                                <div style={{
+                                    height: 12,
+                                    borderRadius: 999,
+                                    background: `linear-gradient(90deg, ${C.pinkLight} 0%, ${C.skyLight} 100%)`,
+                                }} />
+                            </div>
+                        ) : (
+                            <p style={{ fontSize: scale(22), fontWeight: 600, color: C.slate, lineHeight: 1.4, margin: 0 }}>
+                                {qText}
+                            </p>
+                        )}
                     </div>
                     <div style={{ display: "flex", gap: 16 }}>
                         <button
                             onClick={() => handleAnswer(qId, true)}
                             disabled={submitting}
-                            style={{ ...btn(C.blue), flex: 1, fontSize: 20 * fs, padding: "20px", opacity: submitting ? 0.6 : 1 }}
+                            style={{ ...actionBtn(primaryAction), flex: 1, fontSize: scale(20), padding: `${Math.round(20 * fs)}px`, opacity: submitting ? 0.6 : 1 }}
                         >
                             {t.yes}
                         </button>
                         <button
                             onClick={() => handleAnswer(qId, false)}
                             disabled={submitting}
-                            style={{ ...btn("#334155"), flex: 1, fontSize: 20 * fs, padding: "20px", opacity: submitting ? 0.6 : 1 }}
+                            style={{ ...actionBtn(secondaryAction), flex: 1, fontSize: scale(20), padding: `${Math.round(20 * fs)}px`, opacity: submitting ? 0.6 : 1 }}
                         >
                             {t.no}
                         </button>
@@ -1742,21 +2168,35 @@ export default function KioskApp() {
     }
 
     if (step === "complete") return (
-        <Screen rtl={isRTL}>
-            <div style={{ ...card, textAlign: "center", padding: 52 }}>
+        <Screen rtl={isRTL} kidMode={isKidMode}>
+            <div style={themedCard({ textAlign: "center", padding: 52 })}>
                 <div style={{
                     width: 72, height: 72, margin: "0 auto 20px", borderRadius: "50%",
-                    background: "#DCFCE7", color: "#166534",
+                    background: isKidMode
+                        ? `linear-gradient(135deg, ${C.pinkLight} 0%, ${C.skyLight} 100%)`
+                        : "#DCFCE7",
+                    color: isKidMode ? C.pinkDark : "#166534",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 18, fontWeight: 800,
                 }} />
-                <h2 style={{ fontSize: 26 * fs, fontWeight: 700, color: C.slate, margin: "0 0 14px" }}>
-                    {t.complete}
-                </h2>
-                <p style={{ fontSize: 18 * fs, color: C.gray, lineHeight: 1.6, maxWidth: 300, margin: "0 auto 36px" }}>
-                    {t.seated}
-                </p>
-                <button onClick={reset} style={btn(C.lightGray, C.slate, `1px solid ${C.border}`)}>
+                {isKidMode ? (
+                    <KidGraphicBanner
+                        badge={t.child}
+                        title={t.complete}
+                        subtitle={t.seated}
+                        variant={2}
+                    />
+                ) : (
+                    <>
+                        <h2 style={{ fontSize: scale(26), fontWeight: 700, color: C.slate, margin: "0 0 14px" }}>
+                            {t.complete}
+                        </h2>
+                        <p style={{ fontSize: scale(18), color: C.gray, lineHeight: 1.6, maxWidth: 300, margin: "0 auto 36px" }}>
+                            {t.seated}
+                        </p>
+                    </>
+                )}
+                <button onClick={reset} style={outlineBtn(isKidMode ? C.pinkDark : C.slate)}>
                     {t.startNewCheckin}
                 </button>
             </div>
@@ -1766,10 +2206,21 @@ export default function KioskApp() {
     return null
 }
 
-function Screen({ children, rtl }: { children: React.ReactNode; rtl?: boolean }) {
+function Screen({
+    children,
+    rtl,
+    kidMode = false,
+}: {
+    children: React.ReactNode
+    rtl?: boolean
+    kidMode?: boolean
+}) {
     return (
         <div style={{
-            minHeight: "100vh", background: "#F8FAFC",
+            minHeight: "100vh",
+            background: kidMode
+                ? "radial-gradient(circle at top left, #FFF0F8 0%, #FDFBFF 42%, #EFF8FF 100%)"
+                : "#F8FAFC",
             display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
             padding: 24, direction: rtl ? "rtl" : "ltr",

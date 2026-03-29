@@ -10,7 +10,18 @@ dataset/
 
 .DS_Store
 Thumbs.db
+
 .env
 .env.local
 frontend/.env.local
 dashboard/.env.local
+
+node_modules/
+frontend/node_modules/
+dashboard/node_modules/
+
+.next/
+frontend/.next/
+dashboard/.next/
+
+*.tsbuildinfo
