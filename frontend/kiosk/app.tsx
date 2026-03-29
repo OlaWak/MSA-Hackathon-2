@@ -18,7 +18,7 @@ const LANGUAGES = [
     { code: "en", label: "English", region: "CA", dir: "ltr" },
     { code: "fr", label: "Français", region: "FR", dir: "ltr" },
     { code: "ar", label: "العربية", region: "SA", dir: "rtl" },
-    { code: "pa", label: "ਹਿੰਦੀ", region: "IN", dir: "ltr" },
+    { code: "pa", label: "ਪੰਜਾਬੀ", region: "IN", dir: "ltr" },
     { code: "zh", label: "中文", region: "CN", dir: "ltr" },
     { code: "es", label: "Español", region: "ES", dir: "ltr" },
 ]
@@ -99,6 +99,327 @@ const T: Record<string, Record<string, string>> = {
     },
 }
 
+const EXTRA_T: Record<string, Record<string, string>> = {
+    en: {
+        connectingPiCamera: "Connecting to Pi camera...",
+        openingPiCameraWindow: "Opening Pi camera window...",
+        analyzingAge: "Analyzing age...",
+        ageUnclearRetry: "Face seen, but age read was unclear. Try again.",
+        ageCouldNotDetect: "Could not detect age. Please choose manually or retry.",
+        ageScanFailed: "Age scan failed. Please choose manually or retry.",
+        scanFailedStatus: "Scan failed ({status})",
+        tapGreenButton: "Tap the green button to open the Raspberry Pi camera window.",
+        placeFaceGuide: "Place your face inside the highlighted area.",
+        moveFaceGuide: "Move your face into the highlighted area.",
+        holdFaceBox: "Hold your face in the box...",
+        holdStillAuto: "Face aligned. Hold still for auto scan...",
+        capturingAuto: "Face aligned. Capturing automatically...",
+        piWindowTitle: "Raspberry Pi Camera Window",
+        piWindowDesc: "This opens the fullscreen Pi camera screen on the Raspberry Pi, scans there, and sends the age result back into this app.",
+        openPiWindowButton: "Open Pi Camera Window",
+        legacyPiNote: "This uses the legacy Raspberry Pi/OpenCV scan instead of the in-app preview.",
+        cameraUnavailable: "Camera unavailable",
+        usePiCameraWindow: "Use Pi Camera Window",
+        retryCamera: "Retry Camera",
+        faceInPosition: "Face in position",
+        placeFaceInsideArea: "Place face inside area",
+        photoAutoTip: "Photo captures automatically as soon as your face hits the green box.",
+        previewAgeOnly: "Preview frames are temporary. This step saves only the age result, not a photo.",
+        refresh: "Refresh",
+        cardGuideReady: "Position your card inside the guide.",
+        cameraRefreshHelp: "Refresh the page or reconnect the camera.",
+        cardPreviewSent: "Preview frames are temporary. A card image is sent only when you tap Scan.",
+        cameraNotReady: "Camera not ready yet",
+        browserCameraBlocked: "Browser camera permission was blocked or unavailable.",
+        startingAppCamera: "Starting app camera...",
+        browserCameraModeNote: "This mode uses the browser camera on the current device.",
+        cameraModeTitle: "Choose Camera Mode",
+        cameraModeDesc: "Pick how you want to scan. Pi camera uses the Raspberry Pi fullscreen age scanner first, while app camera keeps everything on this device with manual age selection.",
+        piCameraTitle: "Pi Camera",
+        piCameraDesc: "Use the green Pi-camera button for age scanning in the fullscreen Raspberry Pi window. The health card step later still uses the Pi camera preview inside the app.",
+        appCameraTitle: "App Camera",
+        appCameraDesc: "Use this device browser camera for the health card step. Age will be chosen manually instead of auto-detected.",
+        appManualAgeMode: "App camera mode uses manual age selection.",
+        launchPiWindowPrompt: "Use the green button below to launch the Pi camera window",
+        nextScreenAppCamera: "The next screen will use the app camera for health card scanning",
+        appNoAutoAge: "App camera mode does not auto-detect age yet.",
+        appChooseAgeDesc: "Choose the age group below, then the health card screen will use this device browser camera.",
+        changeCameraMode: "Change Camera Mode",
+        healthCardPiMode: "Health card scan is using the Raspberry Pi camera preview inside the app.",
+        healthCardAppMode: "Health card scan is using this device browser camera.",
+        backToCamera: "Back to camera",
+        play: "Play",
+        playQuestionTitle: "Hear question aloud",
+        startNewCheckin: "Start New Check-in",
+        ageDetected: "{age} detected",
+    },
+    fr: {
+        connectingPiCamera: "Connexion a la camera Pi...",
+        openingPiCameraWindow: "Ouverture de la fenetre camera Pi...",
+        analyzingAge: "Analyse de l'age...",
+        ageUnclearRetry: "Un visage a ete detecte, mais l'age n'est pas clair. Reessayez.",
+        ageCouldNotDetect: "Impossible de detecter l'age. Veuillez choisir manuellement ou reessayer.",
+        ageScanFailed: "L'analyse de l'age a echoue. Veuillez choisir manuellement ou reessayer.",
+        scanFailedStatus: "Echec de l'analyse ({status})",
+        tapGreenButton: "Appuyez sur le bouton vert pour ouvrir la fenetre de la camera Raspberry Pi.",
+        placeFaceGuide: "Placez votre visage dans la zone mise en evidence.",
+        moveFaceGuide: "Deplacez votre visage dans la zone mise en evidence.",
+        holdFaceBox: "Gardez votre visage dans le cadre...",
+        holdStillAuto: "Visage bien aligne. Ne bougez pas pour le scan automatique...",
+        capturingAuto: "Visage aligne. Capture automatique...",
+        piWindowTitle: "Fenetre de camera Raspberry Pi",
+        piWindowDesc: "Cette option ouvre l'ecran camera plein ecran sur le Raspberry Pi, effectue le scan et renvoie le resultat d'age dans cette application.",
+        openPiWindowButton: "Ouvrir la camera Pi",
+        legacyPiNote: "Cette option utilise l'ancien scan Raspberry Pi/OpenCV au lieu de l'apercu integre.",
+        cameraUnavailable: "Camera indisponible",
+        usePiCameraWindow: "Utiliser la fenetre camera Pi",
+        retryCamera: "Reessayer la camera",
+        faceInPosition: "Visage en position",
+        placeFaceInsideArea: "Placez le visage dans la zone",
+        photoAutoTip: "La photo se capture automatiquement des que votre visage entre dans la zone verte.",
+        previewAgeOnly: "Les apercus sont temporaires. Cette etape n'enregistre que le resultat d'age, pas de photo.",
+        refresh: "Actualiser",
+        cardGuideReady: "Placez votre carte dans le guide.",
+        cameraRefreshHelp: "Actualisez la page ou reconnectez la camera.",
+        cardPreviewSent: "Les apercus sont temporaires. Une image de la carte n'est envoyee que lorsque vous appuyez sur Scanner.",
+        cameraNotReady: "La camera n'est pas encore prete",
+        browserCameraBlocked: "L'autorisation de la camera du navigateur a ete refusee ou la camera est indisponible.",
+        startingAppCamera: "Demarrage de la camera de l'application...",
+        browserCameraModeNote: "Ce mode utilise la camera du navigateur sur cet appareil.",
+        cameraModeTitle: "Choisir le mode camera",
+        cameraModeDesc: "Choisissez comment vous voulez scanner. La camera Pi utilise d'abord le scanner d'age plein ecran du Raspberry Pi, tandis que la camera de l'application garde tout sur cet appareil avec une selection manuelle de l'age.",
+        piCameraTitle: "Camera Pi",
+        piCameraDesc: "Utilisez le bouton vert de la camera Pi pour le scan d'age dans la fenetre plein ecran du Raspberry Pi. L'etape de la carte sante utilise ensuite l'apercu camera Pi dans l'application.",
+        appCameraTitle: "Camera de l'application",
+        appCameraDesc: "Utilisez la camera du navigateur de cet appareil pour la carte sante. L'age sera choisi manuellement au lieu d'etre detecte automatiquement.",
+        appManualAgeMode: "Le mode camera de l'application utilise la selection manuelle de l'age.",
+        launchPiWindowPrompt: "Utilisez le bouton vert ci-dessous pour lancer la fenetre camera Pi",
+        nextScreenAppCamera: "L'ecran suivant utilisera la camera de l'application pour scanner la carte sante",
+        appNoAutoAge: "Le mode camera de l'application ne detecte pas encore automatiquement l'age.",
+        appChooseAgeDesc: "Choisissez le groupe d'age ci-dessous, puis l'ecran de la carte sante utilisera la camera du navigateur de cet appareil.",
+        changeCameraMode: "Changer de mode camera",
+        healthCardPiMode: "Le scan de la carte sante utilise l'apercu camera Raspberry Pi dans l'application.",
+        healthCardAppMode: "Le scan de la carte sante utilise la camera du navigateur de cet appareil.",
+        backToCamera: "Retour a la camera",
+        play: "Lire",
+        playQuestionTitle: "Lire la question",
+        startNewCheckin: "Commencer un nouvel enregistrement",
+        ageDetected: "{age} detecte",
+    },
+    ar: {
+        connectingPiCamera: "جار الاتصال بكاميرا Pi...",
+        openingPiCameraWindow: "جار فتح نافذة كاميرا Pi...",
+        analyzingAge: "جار تحليل العمر...",
+        ageUnclearRetry: "تم اكتشاف وجه، لكن قراءة العمر غير واضحة. حاول مرة أخرى.",
+        ageCouldNotDetect: "تعذر اكتشاف العمر. يرجى الاختيار يدويا أو المحاولة مرة أخرى.",
+        ageScanFailed: "فشل فحص العمر. يرجى الاختيار يدويا أو المحاولة مرة أخرى.",
+        scanFailedStatus: "فشل الفحص ({status})",
+        tapGreenButton: "اضغط الزر الأخضر لفتح نافذة كاميرا Raspberry Pi.",
+        placeFaceGuide: "ضع وجهك داخل المنطقة المظللة.",
+        moveFaceGuide: "حرك وجهك إلى داخل المنطقة المظللة.",
+        holdFaceBox: "أبق وجهك داخل الإطار...",
+        holdStillAuto: "تمت محاذاة الوجه. ابق ثابتا للفحص التلقائي...",
+        capturingAuto: "تمت محاذاة الوجه. جار الالتقاط تلقائيا...",
+        piWindowTitle: "نافذة كاميرا Raspberry Pi",
+        piWindowDesc: "سيؤدي هذا إلى فتح شاشة كاميرا Raspberry Pi بملء الشاشة، وإجراء الفحص هناك، ثم إعادة نتيجة العمر إلى هذا التطبيق.",
+        openPiWindowButton: "افتح نافذة كاميرا Pi",
+        legacyPiNote: "يستخدم هذا وضع فحص Raspberry Pi/OpenCV القديم بدلا من المعاينة داخل التطبيق.",
+        cameraUnavailable: "الكاميرا غير متاحة",
+        usePiCameraWindow: "استخدم نافذة كاميرا Pi",
+        retryCamera: "إعادة محاولة الكاميرا",
+        faceInPosition: "الوجه في الموضع الصحيح",
+        placeFaceInsideArea: "ضع الوجه داخل المنطقة",
+        photoAutoTip: "سيتم التقاط الصورة تلقائيا بمجرد دخول وجهك إلى الإطار الأخضر.",
+        previewAgeOnly: "المعاينات مؤقتة. هذه الخطوة تحفظ نتيجة العمر فقط، وليس صورة.",
+        refresh: "تحديث",
+        cardGuideReady: "ضع بطاقتك داخل الإطار.",
+        cameraRefreshHelp: "حدث الصفحة أو أعد توصيل الكاميرا.",
+        cardPreviewSent: "المعاينات مؤقتة. لا يتم إرسال صورة البطاقة إلا عند الضغط على المسح.",
+        cameraNotReady: "الكاميرا ليست جاهزة بعد",
+        browserCameraBlocked: "تم حظر إذن كاميرا المتصفح أو أن الكاميرا غير متاحة.",
+        startingAppCamera: "جار تشغيل كاميرا التطبيق...",
+        browserCameraModeNote: "يستخدم هذا الوضع كاميرا المتصفح على هذا الجهاز.",
+        cameraModeTitle: "اختر وضع الكاميرا",
+        cameraModeDesc: "اختر الطريقة التي تريد المسح بها. تستخدم كاميرا Pi أولا ماسح العمر بملء الشاشة على Raspberry Pi، بينما يبقي وضع كاميرا التطبيق كل شيء على هذا الجهاز مع اختيار العمر يدويا.",
+        piCameraTitle: "كاميرا Pi",
+        piCameraDesc: "استخدم الزر الأخضر لكاميرا Pi لإجراء فحص العمر في نافذة Raspberry Pi بملء الشاشة. وبعد ذلك ستظل خطوة بطاقة الصحة تستخدم معاينة كاميرا Pi داخل التطبيق.",
+        appCameraTitle: "كاميرا التطبيق",
+        appCameraDesc: "استخدم كاميرا المتصفح على هذا الجهاز في خطوة بطاقة الصحة. سيتم اختيار العمر يدويا بدلا من اكتشافه تلقائيا.",
+        appManualAgeMode: "يستخدم وضع كاميرا التطبيق اختيار العمر يدويا.",
+        launchPiWindowPrompt: "استخدم الزر الأخضر أدناه لفتح نافذة كاميرا Pi",
+        nextScreenAppCamera: "ستستخدم الشاشة التالية كاميرا التطبيق لمسح بطاقة الصحة",
+        appNoAutoAge: "وضع كاميرا التطبيق لا يكتشف العمر تلقائيا بعد.",
+        appChooseAgeDesc: "اختر الفئة العمرية أدناه، ثم ستستخدم شاشة بطاقة الصحة كاميرا المتصفح على هذا الجهاز.",
+        changeCameraMode: "تغيير وضع الكاميرا",
+        healthCardPiMode: "يستخدم مسح بطاقة الصحة معاينة كاميرا Raspberry Pi داخل التطبيق.",
+        healthCardAppMode: "يستخدم مسح بطاقة الصحة كاميرا المتصفح على هذا الجهاز.",
+        backToCamera: "العودة إلى الكاميرا",
+        play: "تشغيل",
+        playQuestionTitle: "استمع إلى السؤال",
+        startNewCheckin: "ابدأ تسجيلا جديدا",
+        ageDetected: "تم اكتشاف {age}",
+    },
+    pa: {
+        connectingPiCamera: "Pi ਕੈਮਰੇ ਨਾਲ ਜੁੜਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
+        openingPiCameraWindow: "Pi ਕੈਮਰਾ ਵਿੰਡੋ ਖੋਲੀ ਜਾ ਰਹੀ ਹੈ...",
+        analyzingAge: "ਉਮਰ ਦਾ ਵਿਸ਼ਲੇਸ਼ਣ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
+        ageUnclearRetry: "ਚਿਹਰਾ ਮਿਲਿਆ ਹੈ, ਪਰ ਉਮਰ ਸਪਸ਼ਟ ਨਹੀਂ ਆਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+        ageCouldNotDetect: "ਉਮਰ ਪਤਾ ਨਹੀਂ ਲੱਗੀ। ਕਿਰਪਾ ਕਰਕੇ ਹੱਥੋਂ ਚੁਣੋ ਜਾਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+        ageScanFailed: "ਉਮਰ ਸਕੈਨ ਅਸਫਲ ਰਹੀ। ਕਿਰਪਾ ਕਰਕੇ ਹੱਥੋਂ ਚੁਣੋ ਜਾਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+        scanFailedStatus: "ਸਕੈਨ ਅਸਫਲ ({status})",
+        tapGreenButton: "Raspberry Pi ਕੈਮਰਾ ਵਿੰਡੋ ਖੋਲ੍ਹਣ ਲਈ ਹਰਾ ਬਟਨ ਦਬਾਓ।",
+        placeFaceGuide: "ਆਪਣਾ ਚਿਹਰਾ ਹਾਈਲਾਈਟ ਕੀਤੇ ਖੇਤਰ ਦੇ ਅੰਦਰ ਰੱਖੋ।",
+        moveFaceGuide: "ਆਪਣਾ ਚਿਹਰਾ ਹਾਈਲਾਈਟ ਕੀਤੇ ਖੇਤਰ ਵਿੱਚ ਲਿਆਓ।",
+        holdFaceBox: "ਆਪਣਾ ਚਿਹਰਾ ਫਰੇਮ ਵਿੱਚ ਰੱਖੋ...",
+        holdStillAuto: "ਚਿਹਰਾ ਠੀਕ ਜਗ੍ਹਾ 'ਤੇ ਹੈ। ਆਟੋ ਸਕੈਨ ਲਈ ਸ਼ਾਂਤ ਰਹੋ...",
+        capturingAuto: "ਚਿਹਰਾ ਠੀਕ ਜਗ੍ਹਾ 'ਤੇ ਹੈ। ਆਪਣੇ ਆਪ ਕੈਪਚਰ ਹੋ ਰਿਹਾ ਹੈ...",
+        piWindowTitle: "Raspberry Pi ਕੈਮਰਾ ਵਿੰਡੋ",
+        piWindowDesc: "ਇਹ Raspberry Pi 'ਤੇ ਫੁੱਲ ਸਕ੍ਰੀਨ ਕੈਮਰਾ ਸਕ੍ਰੀਨ ਖੋਲ੍ਹਦਾ ਹੈ, ਓਥੇ ਸਕੈਨ ਕਰਦਾ ਹੈ ਅਤੇ ਉਮਰ ਦਾ ਨਤੀਜਾ ਇਸ ਐਪ ਵਿੱਚ ਵਾਪਸ ਭੇਜਦਾ ਹੈ।",
+        openPiWindowButton: "Pi ਕੈਮਰਾ ਵਿੰਡੋ ਖੋਲ੍ਹੋ",
+        legacyPiNote: "ਇਹ ਐਪ ਅੰਦਰਲੀ ਝਲਕ ਦੀ ਥਾਂ ਪੁਰਾਣਾ Raspberry Pi/OpenCV ਸਕੈਨ ਵਰਤਦਾ ਹੈ।",
+        cameraUnavailable: "ਕੈਮਰਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ",
+        usePiCameraWindow: "Pi ਕੈਮਰਾ ਵਿੰਡੋ ਵਰਤੋ",
+        retryCamera: "ਕੈਮਰਾ ਦੁਬਾਰਾ ਚਲਾਓ",
+        faceInPosition: "ਚਿਹਰਾ ਠੀਕ ਸਥਿਤੀ ਵਿੱਚ ਹੈ",
+        placeFaceInsideArea: "ਚਿਹਰਾ ਖੇਤਰ ਵਿੱਚ ਰੱਖੋ",
+        photoAutoTip: "ਜਿਵੇਂ ਹੀ ਤੁਹਾਡਾ ਚਿਹਰਾ ਹਰੇ ਬਾਕਸ ਵਿੱਚ ਆਉਂਦਾ ਹੈ, ਫੋਟੋ ਆਪਣੇ ਆਪ ਕੈਪਚਰ ਹੋ ਜਾਂਦੀ ਹੈ।",
+        previewAgeOnly: "ਝਲਕ ਅਸਥਾਈ ਹੈ। ਇਸ ਕਦਮ ਵਿੱਚ ਸਿਰਫ਼ ਉਮਰ ਦਾ ਨਤੀਜਾ ਸੇਵ ਹੁੰਦਾ ਹੈ, ਫੋਟੋ ਨਹੀਂ।",
+        refresh: "ਤਾਜ਼ਾ ਕਰੋ",
+        cardGuideReady: "ਆਪਣਾ ਕਾਰਡ ਗਾਈਡ ਦੇ ਅੰਦਰ ਰੱਖੋ।",
+        cameraRefreshHelp: "ਪੇਜ ਤਾਜ਼ਾ ਕਰੋ ਜਾਂ ਕੈਮਰਾ ਮੁੜ ਜੋੜੋ।",
+        cardPreviewSent: "ਝਲਕ ਅਸਥਾਈ ਹੈ। ਕਾਰਡ ਦੀ ਤਸਵੀਰ ਸਿਰਫ਼ ਉਸ ਵੇਲੇ ਭੇਜੀ ਜਾਂਦੀ ਹੈ ਜਦੋਂ ਤੁਸੀਂ ਸਕੈਨ ਦਬਾਉਂਦੇ ਹੋ।",
+        cameraNotReady: "ਕੈਮਰਾ ਹਾਲੇ ਤਿਆਰ ਨਹੀਂ ਹੈ",
+        browserCameraBlocked: "ਬਰਾਊਜ਼ਰ ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਰੋਕ ਦਿੱਤੀ ਗਈ ਸੀ ਜਾਂ ਕੈਮਰਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।",
+        startingAppCamera: "ਐਪ ਕੈਮਰਾ ਸ਼ੁਰੂ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
+        browserCameraModeNote: "ਇਹ ਮੋਡ ਇਸ ਡਿਵਾਈਸ ਦੇ ਬਰਾਊਜ਼ਰ ਕੈਮਰੇ ਨੂੰ ਵਰਤਦਾ ਹੈ।",
+        cameraModeTitle: "ਕੈਮਰਾ ਮੋਡ ਚੁਣੋ",
+        cameraModeDesc: "ਤੁਸੀਂ ਕਿਵੇਂ ਸਕੈਨ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ, ਉਹ ਚੁਣੋ। Pi ਕੈਮਰਾ ਪਹਿਲਾਂ Raspberry Pi ਦਾ ਫੁੱਲ ਸਕ੍ਰੀਨ ਉਮਰ ਸਕੈਨਰ ਵਰਤਦਾ ਹੈ, ਜਦਕਿ ਐਪ ਕੈਮਰਾ ਇਸ ਡਿਵਾਈਸ 'ਤੇ ਸਭ ਕੁਝ ਰੱਖਦਾ ਹੈ ਅਤੇ ਉਮਰ ਹੱਥੋਂ ਚੁਣੀ ਜਾਂਦੀ ਹੈ।",
+        piCameraTitle: "Pi ਕੈਮਰਾ",
+        piCameraDesc: "ਉਮਰ ਸਕੈਨ ਲਈ ਹਰਾ Pi ਕੈਮਰਾ ਬਟਨ ਵਰਤੋ ਜੋ Raspberry Pi ਦੀ ਫੁੱਲ ਸਕ੍ਰੀਨ ਵਿੰਡੋ ਵਿੱਚ ਖੁੱਲੇਗਾ। ਬਾਅਦ ਵਿੱਚ ਹੈਲਥ ਕਾਰਡ ਕਦਮ ਐਪ ਅੰਦਰ Pi ਕੈਮਰਾ ਝਲਕ ਹੀ ਵਰਤੇਗਾ।",
+        appCameraTitle: "ਐਪ ਕੈਮਰਾ",
+        appCameraDesc: "ਹੈਲਥ ਕਾਰਡ ਕਦਮ ਲਈ ਇਸ ਡਿਵਾਈਸ ਦਾ ਬਰਾਊਜ਼ਰ ਕੈਮਰਾ ਵਰਤੋ। ਉਮਰ ਆਟੋਮੈਟਿਕ ਨਹੀਂ, ਹੱਥੋਂ ਚੁਣੀ ਜਾਵੇਗੀ।",
+        appManualAgeMode: "ਐਪ ਕੈਮਰਾ ਮੋਡ ਹੱਥੋਂ ਉਮਰ ਚੋਣ ਵਰਤਦਾ ਹੈ।",
+        launchPiWindowPrompt: "ਹੇਠਾਂ ਦਿੱਤੇ ਹਰੇ ਬਟਨ ਨਾਲ Pi ਕੈਮਰਾ ਵਿੰਡੋ ਖੋਲ੍ਹੋ",
+        nextScreenAppCamera: "ਅਗਲੀ ਸਕ੍ਰੀਨ ਹੈਲਥ ਕਾਰਡ ਸਕੈਨ ਕਰਨ ਲਈ ਐਪ ਕੈਮਰਾ ਵਰਤੇਗੀ",
+        appNoAutoAge: "ਐਪ ਕੈਮਰਾ ਮੋਡ ਹਾਲੇ ਉਮਰ ਆਪਣੇ ਆਪ ਨਹੀਂ ਪਛਾਣਦਾ।",
+        appChooseAgeDesc: "ਹੇਠਾਂ ਉਮਰ ਸਮੂਹ ਚੁਣੋ, ਫਿਰ ਹੈਲਥ ਕਾਰਡ ਸਕ੍ਰੀਨ ਇਸ ਡਿਵਾਈਸ ਦਾ ਬਰਾਊਜ਼ਰ ਕੈਮਰਾ ਵਰਤੇਗੀ।",
+        changeCameraMode: "ਕੈਮਰਾ ਮੋਡ ਬਦਲੋ",
+        healthCardPiMode: "ਹੈਲਥ ਕਾਰਡ ਸਕੈਨ ਐਪ ਅੰਦਰ Raspberry Pi ਕੈਮਰਾ ਝਲਕ ਵਰਤ ਰਿਹਾ ਹੈ।",
+        healthCardAppMode: "ਹੈਲਥ ਕਾਰਡ ਸਕੈਨ ਇਸ ਡਿਵਾਈਸ ਦਾ ਬਰਾਊਜ਼ਰ ਕੈਮਰਾ ਵਰਤ ਰਿਹਾ ਹੈ।",
+        backToCamera: "ਕੈਮਰੇ ਵੱਲ ਵਾਪਸ ਜਾਓ",
+        play: "ਚਲਾਓ",
+        playQuestionTitle: "ਸਵਾਲ ਸੁਣੋ",
+        startNewCheckin: "ਨਵਾਂ ਚੈੱਕ-ਇਨ ਸ਼ੁਰੂ ਕਰੋ",
+        ageDetected: "{age} ਮਿਲਿਆ",
+    },
+    zh: {
+        connectingPiCamera: "正在连接 Pi 摄像头...",
+        openingPiCameraWindow: "正在打开 Pi 摄像头窗口...",
+        analyzingAge: "正在分析年龄...",
+        ageUnclearRetry: "检测到了人脸，但年龄识别不清楚。请重试。",
+        ageCouldNotDetect: "无法检测年龄。请选择手动或重试。",
+        ageScanFailed: "年龄扫描失败。请选择手动或重试。",
+        scanFailedStatus: "扫描失败（{status}）",
+        tapGreenButton: "点击绿色按钮以打开 Raspberry Pi 摄像头窗口。",
+        placeFaceGuide: "请将脸放在高亮区域内。",
+        moveFaceGuide: "请把脸移动到高亮区域内。",
+        holdFaceBox: "请把脸保持在框内...",
+        holdStillAuto: "人脸已对齐。请保持不动以进行自动扫描...",
+        capturingAuto: "人脸已对齐。正在自动拍摄...",
+        piWindowTitle: "Raspberry Pi 摄像头窗口",
+        piWindowDesc: "这会在 Raspberry Pi 上打开全屏摄像头界面，在那里完成扫描，并将年龄结果返回到此应用中。",
+        openPiWindowButton: "打开 Pi 摄像头窗口",
+        legacyPiNote: "这会使用旧版 Raspberry Pi/OpenCV 扫描，而不是应用内预览。",
+        cameraUnavailable: "摄像头不可用",
+        usePiCameraWindow: "使用 Pi 摄像头窗口",
+        retryCamera: "重试摄像头",
+        faceInPosition: "人脸已就位",
+        placeFaceInsideArea: "请将脸放入区域内",
+        photoAutoTip: "当您的脸进入绿色框后，系统会自动拍摄。",
+        previewAgeOnly: "预览画面只是临时的。此步骤只保存年龄结果，不保存照片。",
+        refresh: "刷新",
+        cardGuideReady: "请将您的卡片放在引导框内。",
+        cameraRefreshHelp: "请刷新页面或重新连接摄像头。",
+        cardPreviewSent: "预览画面只是临时的。只有在您点击扫描时，才会发送卡片图像。",
+        cameraNotReady: "摄像头尚未就绪",
+        browserCameraBlocked: "浏览器摄像头权限被阻止或摄像头不可用。",
+        startingAppCamera: "正在启动应用摄像头...",
+        browserCameraModeNote: "此模式使用当前设备上的浏览器摄像头。",
+        cameraModeTitle: "选择摄像头模式",
+        cameraModeDesc: "请选择扫描方式。Pi 摄像头会先使用 Raspberry Pi 的全屏年龄扫描器，而应用摄像头会将所有步骤保留在当前设备上，并手动选择年龄。",
+        piCameraTitle: "Pi 摄像头",
+        piCameraDesc: "使用绿色 Pi 摄像头按钮，在 Raspberry Pi 全屏窗口中进行年龄扫描。之后，健康卡步骤仍会在应用内使用 Pi 摄像头预览。",
+        appCameraTitle: "应用摄像头",
+        appCameraDesc: "在健康卡步骤中使用当前设备的浏览器摄像头。年龄将手动选择，而不是自动检测。",
+        appManualAgeMode: "应用摄像头模式使用手动年龄选择。",
+        launchPiWindowPrompt: "使用下面的绿色按钮打开 Pi 摄像头窗口",
+        nextScreenAppCamera: "下一步将使用应用摄像头扫描健康卡",
+        appNoAutoAge: "应用摄像头模式暂时还不能自动检测年龄。",
+        appChooseAgeDesc: "请先在下面选择年龄组，然后健康卡页面会使用当前设备的浏览器摄像头。",
+        changeCameraMode: "更改摄像头模式",
+        healthCardPiMode: "健康卡扫描正在使用应用内的 Raspberry Pi 摄像头预览。",
+        healthCardAppMode: "健康卡扫描正在使用当前设备的浏览器摄像头。",
+        backToCamera: "返回摄像头",
+        play: "播放",
+        playQuestionTitle: "朗读问题",
+        startNewCheckin: "开始新的登记",
+        ageDetected: "已检测到 {age}",
+    },
+    es: {
+        connectingPiCamera: "Conectando a la camara Pi...",
+        openingPiCameraWindow: "Abriendo ventana de la camara Pi...",
+        analyzingAge: "Analizando edad...",
+        ageUnclearRetry: "Se detecto un rostro, pero la lectura de edad no fue clara. Intentelo de nuevo.",
+        ageCouldNotDetect: "No se pudo detectar la edad. Elija manualmente o intentelo de nuevo.",
+        ageScanFailed: "La deteccion de edad fallo. Elija manualmente o intentelo de nuevo.",
+        scanFailedStatus: "Deteccion fallida ({status})",
+        tapGreenButton: "Toque el boton verde para abrir la ventana de la camara Raspberry Pi.",
+        placeFaceGuide: "Coloque su rostro dentro del area resaltada.",
+        moveFaceGuide: "Mueva su rostro hacia el area resaltada.",
+        holdFaceBox: "Mantenga su rostro dentro del recuadro...",
+        holdStillAuto: "Rostro alineado. Quedese quieto para el escaneo automatico...",
+        capturingAuto: "Rostro alineado. Capturando automaticamente...",
+        piWindowTitle: "Ventana de camara Raspberry Pi",
+        piWindowDesc: "Esto abre la pantalla de camara en pantalla completa del Raspberry Pi, realiza el escaneo alli y devuelve el resultado de edad a esta aplicacion.",
+        openPiWindowButton: "Abrir camara Pi",
+        legacyPiNote: "Esto usa el escaneo heredado de Raspberry Pi/OpenCV en lugar de la vista previa dentro de la aplicacion.",
+        cameraUnavailable: "Camara no disponible",
+        usePiCameraWindow: "Usar ventana de camara Pi",
+        retryCamera: "Reintentar camara",
+        faceInPosition: "Rostro en posicion",
+        placeFaceInsideArea: "Coloque el rostro dentro del area",
+        photoAutoTip: "La foto se captura automaticamente tan pronto como su rostro entra en el cuadro verde.",
+        previewAgeOnly: "Las vistas previas son temporales. Este paso solo guarda el resultado de edad, no una foto.",
+        refresh: "Actualizar",
+        cardGuideReady: "Coloque su tarjeta dentro de la guia.",
+        cameraRefreshHelp: "Actualice la pagina o vuelva a conectar la camara.",
+        cardPreviewSent: "Las vistas previas son temporales. La imagen de la tarjeta solo se envia cuando toca Escanear.",
+        cameraNotReady: "La camara aun no esta lista",
+        browserCameraBlocked: "El permiso de la camara del navegador fue bloqueado o la camara no esta disponible.",
+        startingAppCamera: "Iniciando camara de la aplicacion...",
+        browserCameraModeNote: "Este modo usa la camara del navegador en este dispositivo.",
+        cameraModeTitle: "Elegir modo de camara",
+        cameraModeDesc: "Elija como desea escanear. La camara Pi usa primero el escaner de edad en pantalla completa del Raspberry Pi, mientras que la camara de la aplicacion mantiene todo en este dispositivo con seleccion manual de edad.",
+        piCameraTitle: "Camara Pi",
+        piCameraDesc: "Use el boton verde de la camara Pi para escanear la edad en la ventana de pantalla completa del Raspberry Pi. Luego, el paso de la tarjeta de salud sigue usando la vista previa de la camara Pi dentro de la aplicacion.",
+        appCameraTitle: "Camara de la aplicacion",
+        appCameraDesc: "Use la camara del navegador de este dispositivo para el paso de la tarjeta de salud. La edad se elegira manualmente en lugar de detectarse automaticamente.",
+        appManualAgeMode: "El modo de camara de la aplicacion usa seleccion manual de edad.",
+        launchPiWindowPrompt: "Use el boton verde de abajo para abrir la ventana de la camara Pi",
+        nextScreenAppCamera: "La siguiente pantalla usara la camara de la aplicacion para escanear la tarjeta de salud",
+        appNoAutoAge: "El modo de camara de la aplicacion todavia no detecta la edad automaticamente.",
+        appChooseAgeDesc: "Elija el grupo de edad abajo y luego la pantalla de la tarjeta de salud usara la camara del navegador de este dispositivo.",
+        changeCameraMode: "Cambiar modo de camara",
+        healthCardPiMode: "El escaneo de la tarjeta de salud esta usando la vista previa de la camara Raspberry Pi dentro de la aplicacion.",
+        healthCardAppMode: "El escaneo de la tarjeta de salud esta usando la camara del navegador de este dispositivo.",
+        backToCamera: "Volver a la camara",
+        play: "Reproducir",
+        playQuestionTitle: "Escuchar la pregunta",
+        startNewCheckin: "Comenzar nuevo registro",
+        ageDetected: "Se detecto {age}",
+    },
+}
+
 // ── CTAS Triage Questions (7 universal) ────────────────────────
 const TRIAGE_Q: Record<string, Record<string, string>> = {
     en: {
@@ -158,6 +479,23 @@ const TRIAGE_Q: Record<string, Record<string, string>> = {
 }
 
 const QUESTION_IDS = Object.keys(TRIAGE_Q.en)
+
+function translateText(
+    t: Record<string, string>,
+    key: string,
+    values: Record<string, string | number> = {},
+) {
+    const template = t[key] || EXTRA_T.en[key] || T.en[key] || key
+    return Object.entries(values).reduce(
+        (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+        template,
+    )
+}
+
+function ageGroupLabel(ageGroup: AgeGroup, t: Record<string, string>) {
+    const key = ageGroup.toLowerCase()
+    return translateText(t, key)
+}
 
 // ── Shared Styles ──────────────────────────────────────────────
 const btn = (bg: string, color = "#fff", border = "none"): React.CSSProperties => ({
@@ -242,11 +580,7 @@ function arrayBufferToBase64(buf: ArrayBuffer) {
 // ── Logo ───────────────────────────────────────────────────────
 function Logo({ size = 28 }: { size?: number }) {
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-                background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
-                borderRadius: 10, width: size, height: size,
-            }} />
+        <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
             <span style={{ fontSize: size * 0.75, fontWeight: 800, letterSpacing: -0.5 }}>
                 <span style={{ color: C.blue }}>Fast</span>
                 <span style={{ color: "#EF4444" }}>ER</span>
@@ -277,9 +611,11 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 function AgeCamera({
     onDetected,
     mode = "preview",
+    t,
 }: {
     onDetected: (group: AgeGroup) => void
     mode?: AgeCameraMode
+    t: Record<string, string>
 }) {
     const AUTO_SCAN_STEPS = 1
     const frameUrlRef = useRef<string | null>(null)
@@ -288,11 +624,12 @@ function AgeCamera({
     const cooldownUntilRef = useRef(0)
     const readyRef = useRef(false)
     const analyzingRef = useRef(false)
+    const tr = (key: string, values: Record<string, string | number> = {}) => translateText(t, key, values)
 
     const [ready, setReady] = useState(false)
     const [camErr, setCamErr] = useState<string | null>(null)
     const [analyzing, setAnalyzing] = useState(false)
-    const [message, setMessage] = useState("Connecting to Pi camera...")
+    const [message, setMessage] = useState(tr("connectingPiCamera"))
     const [attempt, setAttempt] = useState(0)
     const [guideState, setGuideState] = useState<"adjust" | "aligned">("adjust")
     const [faceBox, setFaceBox] = useState<FaceBox | null>(null)
@@ -336,7 +673,7 @@ function AgeCamera({
         analyzingRef.current = true
         setAnalyzing(true)
         setAutoScanProgress(AUTO_SCAN_STEPS)
-        setMessage(force ? "Opening Pi camera window..." : "Analyzing age...")
+        setMessage(force ? tr("openingPiCameraWindow") : tr("analyzingAge"))
 
         try {
             logCamera("scan_begin", {
@@ -354,7 +691,7 @@ function AgeCamera({
             try { data = await res.json() } catch { data = {} }
             logCamera("scan_response", data)
 
-            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Scan failed (${res.status})`)
+            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : tr("scanFailedStatus", { status: res.status }))
 
             if (data.success && !data.fallback && data.age_group) {
                 onDetected(data.age_group as AgeGroup)
@@ -365,8 +702,8 @@ function AgeCamera({
                 typeof data.message === "string"
                     ? data.message
                     : data.fallback
-                        ? "Face seen, but age read was unclear. Try again."
-                        : "Could not detect age. Please choose manually or retry."
+                        ? tr("ageUnclearRetry")
+                        : tr("ageCouldNotDetect")
             )
             cooldownUntilRef.current = Date.now() + 600
             autoTriggeredRef.current = false
@@ -374,7 +711,7 @@ function AgeCamera({
             setAutoScanProgress(0)
             return false
         } catch (err) {
-            const msg = err instanceof Error ? err.message : "Age scan failed. Please choose manually or retry."
+            const msg = err instanceof Error ? err.message : tr("ageScanFailed")
             setMessage(msg)
             cooldownUntilRef.current = Date.now() + 600
             autoTriggeredRef.current = false
@@ -400,7 +737,7 @@ function AgeCamera({
             setGuideState("adjust")
             setFaceBox(null)
             setAutoScanProgress(0)
-            setMessage("Tap the green button to open the Raspberry Pi camera window.")
+            setMessage(tr("tapGreenButton"))
             clearFrameUrl()
             return
         }
@@ -417,14 +754,14 @@ function AgeCamera({
         setGuideState("adjust")
         setFaceBox(null)
         setAutoScanProgress(0)
-        setMessage("Connecting to Pi camera...")
+        setMessage(tr("connectingPiCamera"))
 
         const loop = async () => {
             while (!cancelled) {
                 try {
                     const res = await fetch(`${PI_SERVER}/camera-frame?ts=${Date.now()}`, { cache: "no-store" })
                     if (!res.ok) {
-                        throw new Error(res.headers.get("X-Camera-Error") || `Camera unavailable (${res.status})`)
+                        throw new Error(res.headers.get("X-Camera-Error") || `${tr("cameraUnavailable")} (${res.status})`)
                     }
 
                     const buf = await res.arrayBuffer()
@@ -437,7 +774,7 @@ function AgeCamera({
                     readyRef.current = true
                     setReady(true)
                     setCamErr(null)
-                    setMessage("Place your face inside the highlighted area.")
+                    setMessage(tr("placeFaceGuide"))
 
                     const faceDetected = res.headers.get("X-Face-Detected") === "1"
                     const faceCentered = res.headers.get("X-Face-Centered") === "1"
@@ -453,13 +790,13 @@ function AgeCamera({
                         setAutoScanProgress(0)
                         setMessage(
                             faceDetected
-                                ? "Move your face into the highlighted area."
-                                : "Place your face inside the highlighted area."
+                                ? tr("moveFaceGuide")
+                                : tr("placeFaceGuide")
                         )
                     } else {
                         if (Date.now() < cooldownUntilRef.current) {
                             setAutoScanProgress(0)
-                            setMessage("Hold your face in the box...")
+                            setMessage(tr("holdFaceBox"))
                             await sleep(150)
                             continue
                         }
@@ -469,10 +806,10 @@ function AgeCamera({
                         setAutoScanProgress(nextSteps)
 
                         if (nextSteps < AUTO_SCAN_STEPS) {
-                            setMessage("Face aligned. Hold still for auto scan...")
+                            setMessage(tr("holdStillAuto"))
                         } else if (!autoTriggeredRef.current) {
                             autoTriggeredRef.current = true
-                            setMessage("Face aligned. Capturing automatically...")
+                            setMessage(tr("capturingAuto"))
                             logCamera("auto_scan_triggered", { steps: nextSteps })
                             await sleep(60)
                             if (cancelled) return
@@ -485,7 +822,7 @@ function AgeCamera({
 
                     await sleep(220)
                 } catch (err) {
-                    const msg = err instanceof Error ? err.message : "Camera unavailable"
+                    const msg = err instanceof Error ? err.message : tr("cameraUnavailable")
                     if (cancelled) break
                     readyRef.current = false
                     setReady(false)
@@ -522,14 +859,12 @@ function AgeCamera({
                         background: "rgba(37,99,235,0.18)", color: "#BFDBFE",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 20, fontWeight: 800,
-                    }}>
-                        PI
-                    </div>
+                    }} />
                     <div style={{ color: "#F8FAFC", fontSize: 18, fontWeight: 700 }}>
-                        Raspberry Pi Camera Window
+                        {tr("piWindowTitle")}
                     </div>
                     <p style={{ color: "#94A3B8", fontSize: 14, lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
-                        This opens the fullscreen Pi camera screen on the Raspberry Pi, scans there, and sends the age result back into this app.
+                        {tr("piWindowDesc")}
                     </p>
                 </div>
 
@@ -550,12 +885,12 @@ function AgeCamera({
                             width: "100%",
                         }}
                     >
-                        {analyzing ? "Analyzing..." : "Open Pi Camera Window"}
+                        {analyzing ? tr("analyzingAge") : tr("openPiWindowButton")}
                     </button>
                 </div>
 
                 <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "12px 0 0" }}>
-                    This uses the legacy Raspberry Pi/OpenCV scan instead of the in-app preview.
+                    {tr("legacyPiNote")}
                 </p>
             </div>
         )
@@ -572,7 +907,7 @@ function AgeCamera({
                         height: "100%", display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center", gap: 8, padding: 16,
                     }}>
-                        <span style={{ color: "#CBD5E1", fontSize: 16, fontWeight: 700, textAlign: "center" }}>Camera unavailable</span>
+                        <span style={{ color: "#CBD5E1", fontSize: 16, fontWeight: 700, textAlign: "center" }}>{tr("cameraUnavailable")}</span>
                         <span style={{ color: "#94A3B8", fontSize: 12, textAlign: "center" }}>{camErr}</span>
                         <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
                             <button
@@ -580,14 +915,14 @@ function AgeCamera({
                                 disabled={analyzing}
                                 style={{ ...btn(C.green), width: "auto", padding: "10px 20px", fontSize: 14 }}
                             >
-                                Use Pi Camera Window
+                                {tr("usePiCameraWindow")}
                             </button>
                             <button
                                 onClick={() => setAttempt(a => a + 1)}
                                 disabled={analyzing}
                                 style={{ ...btn(C.blue), width: "auto", padding: "10px 20px", fontSize: 14 }}
                             >
-                                Retry Camera
+                                {tr("retryCamera")}
                             </button>
                         </div>
                     </div>
@@ -596,7 +931,7 @@ function AgeCamera({
                         {frameUrl && (
                             <img
                                 src={frameUrl}
-                                alt="Kiosk camera preview"
+                                alt=""
                                 style={{
                                     width: "100%", height: "100%", objectFit: "cover", display: "block",
                                     opacity: ready ? 1 : 0,
@@ -624,7 +959,7 @@ function AgeCamera({
                                 color: "#fff", padding: "8px 12px", borderRadius: 999,
                                 fontSize: 12, fontWeight: 700, letterSpacing: 0.2, whiteSpace: "nowrap",
                             }}>
-                                {guideState === "aligned" ? "Face in position" : "Place face inside area"}
+                                {guideState === "aligned" ? tr("faceInPosition") : tr("placeFaceInsideArea")}
                             </div>
                             {faceBox && (
                                 <div style={{
@@ -660,7 +995,7 @@ function AgeCamera({
                                     color: C.slate, padding: "12px 18px",
                                     borderRadius: 12, fontSize: 14, fontWeight: 700,
                                 }}>
-                                    Analyzing...
+                                    {tr("analyzingAge")}
                                 </div>
                             </div>
                         )}
@@ -692,12 +1027,12 @@ function AgeCamera({
                     }} />
                 </div>
                 <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "8px 0 0" }}>
-                    Photo captures automatically as soon as your face hits the green box.
+                    {tr("photoAutoTip")}
                 </p>
             </div>
 
             <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
-                Preview frames are temporary. This step saves only the age result, not a photo.
+                {tr("previewAgeOnly")}
             </p>
 
             <div style={{ display: "flex", gap: 10 }}>
@@ -715,7 +1050,7 @@ function AgeCamera({
                         width: "100%",
                     }}
                 >
-                    Refresh
+                    {tr("refresh")}
                 </button>
             </div>
         </div>
@@ -737,7 +1072,8 @@ function LiveCamera({
     const [ready, setReady] = useState(false)
     const [camErr, setCamErr] = useState<string | null>(null)
     const [attempt, setAttempt] = useState(0)
-    const [status, setStatus] = useState("Connecting to Pi camera...")
+    const tr = (key: string, values: Record<string, string | number> = {}) => translateText(t, key, values)
+    const [status, setStatus] = useState(tr("connectingPiCamera"))
 
     useEffect(() => {
         return () => {
@@ -755,10 +1091,10 @@ function LiveCamera({
         const previewLoop = async () => {
             while (!cancelled) {
                 try {
-                    setStatus("Connecting to Pi camera...")
+                    setStatus(tr("connectingPiCamera"))
                     const res = await fetch(`${PI_SERVER}/camera-frame?ts=${Date.now()}`, { cache: "no-store" })
                     if (!res.ok) {
-                        throw new Error(res.headers.get("X-Camera-Error") || `Camera unavailable (${res.status})`)
+                        throw new Error(res.headers.get("X-Camera-Error") || `${tr("cameraUnavailable")} (${res.status})`)
                     }
 
                     const buf = await res.arrayBuffer()
@@ -773,9 +1109,9 @@ function LiveCamera({
 
                     setReady(true)
                     setCamErr(null)
-                    setStatus("Position your card inside the guide.")
+                    setStatus(tr("cardGuideReady"))
                 } catch (err) {
-                    const msg = err instanceof Error ? err.message : "Camera unavailable"
+                    const msg = err instanceof Error ? err.message : tr("cameraUnavailable")
                     if (cancelled) break
                     if (frameUrlRef.current) {
                         URL.revokeObjectURL(frameUrlRef.current)
@@ -805,7 +1141,7 @@ function LiveCamera({
         if (scanning || !ready || camErr) return
         const b64 = frameB64Ref.current
         if (!b64) {
-            setStatus("Camera not ready yet")
+            setStatus(tr("cameraNotReady"))
             return
         }
         onCapture(b64)
@@ -826,15 +1162,15 @@ function LiveCamera({
                         height: "100%", display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center", gap: 8,
                     }}>
-                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>Camera unavailable</span>
-                        <span style={{ color: "#64748B", fontSize: 13 }}>Refresh the page or reconnect the camera.</span>
+                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>{tr("cameraUnavailable")}</span>
+                        <span style={{ color: "#64748B", fontSize: 13 }}>{tr("cameraRefreshHelp")}</span>
                     </div>
                 ) : (
                     <>
                         {frameUrl && (
                             <img
                                 src={frameUrl}
-                                alt="Kiosk card camera"
+                                alt=""
                                 style={{
                                     width: "100%", height: "100%", objectFit: "cover",
                                     opacity: ready ? 1 : 0,
@@ -868,7 +1204,7 @@ function LiveCamera({
             </div>
 
             <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
-                Preview frames are temporary. A card image is sent only when you tap Scan.
+                {tr("cardPreviewSent")}
             </p>
 
             <div style={{ display: "flex", gap: 10 }}>
@@ -890,7 +1226,7 @@ function LiveCamera({
                         width: 150, flexShrink: 0,
                     }}
                 >
-                    Refresh
+                    {tr("refresh")}
                 </button>
             </div>
         </div>
@@ -911,6 +1247,7 @@ function BrowserCardCamera({
     const streamRef = useRef<MediaStream | null>(null)
     const [ready, setReady] = useState(false)
     const [camErr, setCamErr] = useState<string | null>(null)
+    const tr = (key: string, values: Record<string, string | number> = {}) => translateText(t, key, values)
 
     useEffect(() => {
         let active = true
@@ -933,7 +1270,7 @@ function BrowserCardCamera({
             })
             .catch(() => {
                 if (!active) return
-                setCamErr("Browser camera permission was blocked or unavailable.")
+                setCamErr(tr("browserCameraBlocked"))
             })
 
         return () => {
@@ -969,7 +1306,7 @@ function BrowserCardCamera({
                         height: "100%", display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center", gap: 8, padding: 16,
                     }}>
-                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>Camera unavailable</span>
+                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>{tr("cameraUnavailable")}</span>
                         <span style={{ color: "#64748B", fontSize: 13, textAlign: "center" }}>{camErr}</span>
                     </div>
                 ) : (
@@ -1000,7 +1337,7 @@ function BrowserCardCamera({
                                 alignItems: "center", justifyContent: "center", gap: 10,
                             }}>
                                 <CameraSpinner />
-                                <span style={{ color: "#94A3B8", fontSize: 14 }}>Starting app camera...</span>
+                                <span style={{ color: "#94A3B8", fontSize: 14 }}>{tr("startingAppCamera")}</span>
                             </div>
                         )}
                     </>
@@ -1008,7 +1345,7 @@ function BrowserCardCamera({
             </div>
 
             <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
-                This mode uses the browser camera on the current device.
+                {tr("browserCameraModeNote")}
             </p>
 
             <button
@@ -1056,7 +1393,12 @@ export default function KioskApp() {
     const [answers, setAnswers] = useState<Record<string, boolean>>({})
     const [submitting, setSubmitting] = useState(false)
 
-    const t = T[lang] || T.en
+    const t = {
+        ...(T.en || {}),
+        ...(EXTRA_T.en || {}),
+        ...(T[lang] || {}),
+        ...(EXTRA_T[lang] || {}),
+    }
     const isRTL = LANGUAGES.find(l => l.code === lang)?.dir === "rtl"
     const fs = ageGroup === "Senior" ? 1.15 : 1
 
@@ -1132,7 +1474,7 @@ export default function KioskApp() {
             <div style={{ textAlign: "center", marginBottom: 36 }}>
                 <Logo size={42} />
                 <h1 style={{ fontSize: 26, fontWeight: 700, margin: "20px 0 8px", color: C.slate }}>
-                    Welcome to FastER Healthcare
+                    {t.welcome}
                 </h1>
                 <p style={{ color: C.gray, fontSize: 15 }}>{t.selectLang}</p>
             </div>
@@ -1166,14 +1508,12 @@ export default function KioskApp() {
                     borderRadius: 16, background: C.blueLight,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     color: C.blue, fontSize: 18, fontWeight: 800,
-                }}>
-                    CAM
-                </div>
+                }} />
                 <h2 style={{ fontSize: 22 * fs, fontWeight: 700, color: C.slate, margin: "0 0 10px" }}>
-                    Choose Camera Mode
+                    {t.cameraModeTitle}
                 </h2>
                 <p style={{ color: C.gray, fontSize: 15, lineHeight: 1.5, margin: 0 }}>
-                    Pick how you want to scan. Pi camera uses the Raspberry Pi fullscreen age scanner first, while app camera keeps everything on this device with manual age selection.
+                    {t.cameraModeDesc}
                 </p>
             </div>
 
@@ -1188,9 +1528,9 @@ export default function KioskApp() {
                         background: C.blueLight,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>Pi Camera</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.piCameraTitle}</div>
                     <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
-                        Use the green Pi-camera button for age scanning in the fullscreen Raspberry Pi window. The health card step later still uses the Pi camera preview inside the app.
+                        {t.piCameraDesc}
                     </div>
                 </button>
 
@@ -1203,9 +1543,9 @@ export default function KioskApp() {
                         border: `2px solid ${C.border}`,
                     }}
                 >
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>App Camera</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>{t.appCameraTitle}</div>
                     <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
-                        Use this device browser camera for the health card step. Age will be chosen manually instead of auto-detected.
+                        {t.appCameraDesc}
                     </div>
                 </button>
             </div>
@@ -1220,33 +1560,31 @@ export default function KioskApp() {
                     borderRadius: 16, background: C.blueLight,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     color: C.blue, fontSize: 18, fontWeight: 800,
-                }}>
-                    AGE
-                </div>
+                }} />
                 <p style={{ color: C.gray, fontSize: 16 * fs, marginBottom: 8 }}>
-                    {cameraMode === "pi" ? t.detecting : "App camera mode uses manual age selection."}
+                    {cameraMode === "pi" ? t.detecting : t.appManualAgeMode}
                 </p>
                 {ageGroup
-                    ? <div style={{ fontSize: 32, fontWeight: 700, color: C.green }}>{ageGroup} detected</div>
+                    ? <div style={{ fontSize: 32, fontWeight: 700, color: C.green }}>{translateText(t, "ageDetected", { age: ageGroupLabel(ageGroup, t) })}</div>
                     : <div style={{ fontSize: 16, fontWeight: 600, color: C.blue, lineHeight: 1.4 }}>
                         {cameraMode === "pi"
-                            ? "Use the green button below to launch the Pi camera window"
-                            : "The next screen will use the app camera for health card scanning"}
+                            ? t.launchPiWindowPrompt
+                            : t.nextScreenAppCamera}
                     </div>
                 }
             </div>
             {!ageGroup && cameraMode === "pi" && (
                 <div style={{ ...card, marginBottom: 16 }}>
-                    <AgeCamera onDetected={setAgeGroup} mode="legacy" />
+                    <AgeCamera onDetected={setAgeGroup} mode="legacy" t={t} />
                 </div>
             )}
             {!ageGroup && cameraMode === "app" && (
                 <div style={{ ...card, marginBottom: 16, textAlign: "center" }}>
                     <p style={{ color: C.slate, fontSize: 16, fontWeight: 600, margin: "0 0 8px" }}>
-                        App camera mode does not auto-detect age yet.
+                        {t.appNoAutoAge}
                     </p>
                     <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.5, margin: 0 }}>
-                        Choose the age group below, then the health card screen will use this device browser camera.
+                        {t.appChooseAgeDesc}
                     </p>
                 </div>
             )}
@@ -1277,7 +1615,7 @@ export default function KioskApp() {
                     onClick={() => setStep("camera")}
                     style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 14 }}
                 >
-                    Change Camera Mode
+                    {t.changeCameraMode}
                 </button>
             </div>
         </Screen>
@@ -1290,8 +1628,8 @@ export default function KioskApp() {
             </h2>
             <p style={{ textAlign: "center", color: C.gray, margin: "0 0 14px", fontSize: 14 }}>
                 {cameraMode === "pi"
-                    ? "Health card scan is using the Raspberry Pi camera preview inside the app."
-                    : "Health card scan is using this device browser camera."}
+                    ? t.healthCardPiMode
+                    : t.healthCardAppMode}
             </p>
             {cardMode === "scan" ? (
                 <div style={{ ...card, marginBottom: 12 }}>
@@ -1308,7 +1646,7 @@ export default function KioskApp() {
                         onClick={() => setStep("camera")}
                         style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 10 }}
                     >
-                        Change Camera Mode
+                        {t.changeCameraMode}
                     </button>
                 </div>
             ) : (
@@ -1352,7 +1690,7 @@ export default function KioskApp() {
                         {t.submit}
                     </button>
                     <button onClick={() => setCardMode("scan")} style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`) }}>
-                        Back to camera
+                        {t.backToCamera}
                     </button>
                 </div>
             )}
@@ -1374,9 +1712,9 @@ export default function KioskApp() {
                                 minWidth: 72, height: 46, cursor: "pointer", flexShrink: 0,
                                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
                             }}
-                            title="Hear question aloud"
+                            title={t.playQuestionTitle}
                         >
-                            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>Play</span>
+                            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{t.play}</span>
                         </button>
                         <p style={{ fontSize: 22 * fs, fontWeight: 600, color: C.slate, lineHeight: 1.4, margin: 0 }}>
                             {qText}
@@ -1411,9 +1749,7 @@ export default function KioskApp() {
                     background: "#DCFCE7", color: "#166534",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 18, fontWeight: 800,
-                }}>
-                    DONE
-                </div>
+                }} />
                 <h2 style={{ fontSize: 26 * fs, fontWeight: 700, color: C.slate, margin: "0 0 14px" }}>
                     {t.complete}
                 </h2>
@@ -1421,7 +1757,7 @@ export default function KioskApp() {
                     {t.seated}
                 </p>
                 <button onClick={reset} style={btn(C.lightGray, C.slate, `1px solid ${C.border}`)}>
-                    Start New Check-in
+                    {t.startNewCheckin}
                 </button>
             </div>
         </Screen>
