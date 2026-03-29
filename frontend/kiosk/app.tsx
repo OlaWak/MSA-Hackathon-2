@@ -730,6 +730,81 @@ const BODY_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
     },
 }
 
+const BODY_SELECTION_T: Record<string, Record<string, string>> = {
+    en: {
+        whereHurts: "Where does it hurt?",
+        whereHurtsDesc: "Tap the area on the body that needs attention before the questions start.",
+        chest: "Chest",
+        head: "Head / Face",
+        arm: "Arm / Shoulder",
+        leg: "Leg / Knee / Hip",
+        abdomen: "Abdomen",
+        other: "Other / General",
+        otherDesc: "(Vomiting, fainting, fever, rash...)",
+        continueToQuestions: "Continue",
+    },
+    fr: {
+        whereHurts: "Ou avez-vous mal ?",
+        whereHurtsDesc: "Appuyez sur la zone du corps qui necessite une attention avant de commencer les questions.",
+        chest: "Poitrine",
+        head: "Tete / Visage",
+        arm: "Bras / Epaule",
+        leg: "Jambe / Genou / Hanche",
+        abdomen: "Abdomen",
+        other: "Autre / General",
+        otherDesc: "(Vomissements, evanouissement, fievre, eruption...)",
+        continueToQuestions: "Continuer",
+    },
+    ar: {
+        whereHurts: "أين تشعر بالألم؟",
+        whereHurtsDesc: "اضغط على المنطقة في الجسم التي تحتاج إلى اهتمام قبل بدء الأسئلة.",
+        chest: "الصدر",
+        head: "الرأس / الوجه",
+        arm: "الذراع / الكتف",
+        leg: "الساق / الركبة / الورك",
+        abdomen: "البطن",
+        other: "أخرى / عام",
+        otherDesc: "(قيء، إغماء، حمى، طفح جلدي...)",
+        continueToQuestions: "متابعة",
+    },
+    pa: {
+        whereHurts: "ਦਰਦ ਕਿੱਥੇ ਹੈ?",
+        whereHurtsDesc: "ਸਵਾਲ ਸ਼ੁਰੂ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਸਰੀਰ ਦੇ ਉਸ ਹਿੱਸੇ 'ਤੇ ਟੈਪ ਕਰੋ ਜਿਸ ਨੂੰ ਧਿਆਨ ਦੀ ਲੋੜ ਹੈ।",
+        chest: "ਛਾਤੀ",
+        head: "ਸਿਰ / ਚਿਹਰਾ",
+        arm: "ਬਾਂਹ / ਮੋਢਾ",
+        leg: "ਲੱਤ / ਗੋਡਾ / ਕਮਰ",
+        abdomen: "ਪੇਟ",
+        other: "ਹੋਰ / ਆਮ",
+        otherDesc: "(ਉਲਟੀ, ਬੇਹੋਸ਼ੀ, ਬੁਖਾਰ, ਧੱਫੜ...)",
+        continueToQuestions: "ਜਾਰੀ ਰੱਖੋ",
+    },
+    zh: {
+        whereHurts: "哪里不舒服？",
+        whereHurtsDesc: "在开始提问之前，请点击身体上需要关注的部位。",
+        chest: "胸部",
+        head: "头部 / 面部",
+        arm: "手臂 / 肩膀",
+        leg: "腿部 / 膝盖 / 髋部",
+        abdomen: "腹部",
+        other: "其他 / 全身",
+        otherDesc: "（呕吐、晕厥、发烧、皮疹...）",
+        continueToQuestions: "继续",
+    },
+    es: {
+        whereHurts: "¿Dónde le duele?",
+        whereHurtsDesc: "Toque el área del cuerpo que necesita atención antes de comenzar las preguntas.",
+        chest: "Pecho",
+        head: "Cabeza / Cara",
+        arm: "Brazo / Hombro",
+        leg: "Pierna / Rodilla / Cadera",
+        abdomen: "Abdomen",
+        other: "Otro / General",
+        otherDesc: "(Vomitos, desmayo, fiebre, sarpullido...)",
+        continueToQuestions: "Continuar",
+    },
+}
+
 function translateText(
     t: Record<string, string>,
     key: string,
@@ -1987,6 +2062,10 @@ export default function KioskApp() {
         ...(T[lang] || {}),
         ...(EXTRA_T[lang] || {}),
     }
+    const bodyT = {
+        ...(BODY_SELECTION_T.en || {}),
+        ...(BODY_SELECTION_T[lang] || {}),
+    }
     const isRTL = LANGUAGES.find(l => l.code === lang)?.dir === "rtl"
     const fs = ageGroup === "Senior" ? 1.28 : 1
     const isKidMode = ageGroup === "Child"
@@ -2466,20 +2545,20 @@ export default function KioskApp() {
                 <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
                 <div style={themedCard({ marginTop: isKidMode ? 12 : 16 })}>
                     <h2 style={{ fontSize: scale(22), fontWeight: 700, color: C.slate, textAlign: "center", margin: "0 0 8px" }}>
-                        {t.whereHurts}
+                        {bodyT.whereHurts}
                     </h2>
                     <p style={{ color: C.gray, fontSize: scale(14), textAlign: "center", margin: "0 0 22px", lineHeight: 1.5 }}>
-                        {t.whereHurtsDesc}
+                        {bodyT.whereHurtsDesc}
                     </p>
                     <div style={{ display: "flex", justifyContent: "center" }}>
-                        <BodySilhouette selected={bodyPart} onSelect={setBodyPart} t={t} />
+                        <BodySilhouette selected={bodyPart} onSelect={setBodyPart} t={bodyT} />
                     </div>
                     {bodyPart && (
                         <button
                             onClick={() => handleBodySelect(bodyPart)}
                             style={{ ...actionBtn(primaryAction), marginTop: 22 }}
                         >
-                            {t.continueToQuestions}
+                            {bodyT.continueToQuestions}
                         </button>
                     )}
                 </div>
