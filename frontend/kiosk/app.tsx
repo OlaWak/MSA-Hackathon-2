@@ -499,43 +499,235 @@ const TRIAGE_Q: Record<string, Record<string, string>> = {
 
 const QUESTION_IDS = Object.keys(TRIAGE_Q.en)
 
-const BODY_QUESTIONS: Record<string, Array<{ id: string; text: string }>> = {
-    chest: [
-        { id: "chest_pain", text: "Do you have chest pain or pressure?" },
-        { id: "radiating_pain", text: "Does the pain spread to your arm, jaw, or back?" },
-        { id: "difficulty_breathing", text: "Are you having difficulty breathing?" },
-        { id: "sweating", text: "Are you sweating or feeling clammy?" },
-    ],
-    head: [
-        { id: "severe_headache", text: "Do you have a sudden or very severe headache?" },
-        { id: "vision_change", text: "Do you have blurred or double vision?" },
-        { id: "dizziness", text: "Do you feel dizzy or unsteady?" },
-        { id: "confusion", text: "Are you feeling confused or disoriented?" },
-    ],
-    arm: [
-        { id: "arm_pain", text: "Do you have pain or swelling in your arm or shoulder?" },
-        { id: "numbness", text: "Do you have numbness or tingling in your arm or hand?" },
-        { id: "injury", text: "Did you injure or fall on your arm recently?" },
-        { id: "weakness", text: "Do you have weakness or inability to move your arm?" },
-    ],
-    leg: [
-        { id: "leg_pain", text: "Do you have pain or swelling in your leg, knee, or hip?" },
-        { id: "leg_injury", text: "Did you injure your leg, knee, or ankle recently?" },
-        { id: "leg_numbness", text: "Do you have numbness or weakness in your leg or foot?" },
-        { id: "cannot_walk", text: "Are you unable to walk or bear weight on your leg?" },
-    ],
-    abdomen: [
-        { id: "abdominal_pain", text: "Do you have stomach or abdominal pain?" },
-        { id: "vomiting", text: "Have you been vomiting?" },
-        { id: "pain_duration", text: "Has the pain lasted more than 6 hours?" },
-        { id: "fever", text: "Do you have a fever?" },
-    ],
-    other: [
-        { id: "fainting", text: "Did you faint, pass out, or nearly pass out?" },
-        { id: "allergic_reaction", text: "Do you have a rash, hives, or a swollen face?" },
-        { id: "fever_other", text: "Do you have a high fever?" },
-        { id: "general_weakness", text: "Are you feeling very weak or unusually tired?" },
-    ],
+const BODY_QUESTIONS: Record<string, Record<string, Record<string, string>>> = {
+    chest: {
+        en: {
+            chest_pain: "Do you have chest pain or pressure?",
+            radiating_pain: "Does the pain spread to your arm, jaw, or back?",
+            difficulty_breathing: "Are you having difficulty breathing?",
+            sweating: "Are you sweating or feeling clammy?",
+        },
+        fr: {
+            chest_pain: "Avez-vous des douleurs ou une pression dans la poitrine ?",
+            radiating_pain: "La douleur irradie-t-elle vers le bras, la machoire ou le dos ?",
+            difficulty_breathing: "Avez-vous du mal a respirer ?",
+            sweating: "Transpirez-vous ou avez-vous des sueurs froides ?",
+        },
+        ar: {
+            chest_pain: "هل تشعر بألم أو ضغط في الصدر؟",
+            radiating_pain: "هل ينتشر الألم إلى ذراعك أو فكك أو ظهرك؟",
+            difficulty_breathing: "هل تواجه صعوبة في التنفس؟",
+            sweating: "هل تتعرق أو تشعر بالرطوبة الباردة؟",
+        },
+        pa: {
+            chest_pain: "ਕੀ ਤੁਹਾਨੂੰ ਛਾਤੀ ਵਿੱਚ ਦਰਦ ਜਾਂ ਦਬਾਅ ਹੈ?",
+            radiating_pain: "ਕੀ ਦਰਦ ਬਾਂਹ, ਜਬਾੜੇ ਜਾਂ ਪਿੱਠ ਵੱਲ ਫੈਲਦਾ ਹੈ?",
+            difficulty_breathing: "ਕੀ ਤੁਹਾਨੂੰ ਸਾਹ ਲੈਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਹੈ?",
+            sweating: "ਕੀ ਤੁਸੀਂ ਪਸੀਨਾ ਆਉਣਾ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?",
+        },
+        zh: {
+            chest_pain: "您有胸痛或胸部压迫感吗？",
+            radiating_pain: "疼痛是否放射到手臂、下颌或背部？",
+            difficulty_breathing: "您有呼吸困难吗？",
+            sweating: "您有出汗或感觉潮湿吗？",
+        },
+        es: {
+            chest_pain: "¿Tiene dolor o presión en el pecho?",
+            radiating_pain: "¿El dolor se extiende al brazo, mandíbula o espalda?",
+            difficulty_breathing: "¿Tiene dificultad para respirar?",
+            sweating: "¿Está sudando o se siente húmedo y frío?",
+        },
+    },
+    head: {
+        en: {
+            severe_headache: "Do you have a sudden or very severe headache?",
+            vision_change: "Do you have blurred or double vision?",
+            dizziness: "Do you feel dizzy or unsteady?",
+            confusion: "Are you feeling confused or disoriented?",
+        },
+        fr: {
+            severe_headache: "Avez-vous un mal de tete soudain ou tres severe ?",
+            vision_change: "Avez-vous une vision floue ou double ?",
+            dizziness: "Vous sentez-vous etourdi ou instable ?",
+            confusion: "Vous sentez-vous confus ou desoriente ?",
+        },
+        ar: {
+            severe_headache: "هل تعاني من صداع مفاجئ أو شديد جداً؟",
+            vision_change: "هل تعاني من ضبابية في الرؤية أو رؤية مزدوجة؟",
+            dizziness: "هل تشعر بدوار أو عدم توازن؟",
+            confusion: "هل تشعر بالارتباك أو فقدان التوجه؟",
+        },
+        pa: {
+            severe_headache: "ਕੀ ਤੁਹਾਨੂੰ ਅਚਾਨਕ ਜਾਂ ਬਹੁਤ ਜ਼ਿਆਦਾ ਸਿਰ ਦਰਦ ਹੈ?",
+            vision_change: "ਕੀ ਤੁਹਾਡੀ ਨਜ਼ਰ ਧੁੰਦਲੀ ਜਾਂ ਦੋਹਰੀ ਹੋ ਗਈ ਹੈ?",
+            dizziness: "ਕੀ ਤੁਸੀਂ ਚੱਕਰ ਆਉਣੇ ਮਹਿਸੂਸ ਕਰਦੇ ਹੋ?",
+            confusion: "ਕੀ ਤੁਸੀਂ ਉਲਝਣ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?",
+        },
+        zh: {
+            severe_headache: "您有突然发作或非常剧烈的头痛吗？",
+            vision_change: "您有视力模糊或复视吗？",
+            dizziness: "您感到头晕或站立不稳吗？",
+            confusion: "您感到意识混乱或方向感丧失吗？",
+        },
+        es: {
+            severe_headache: "¿Tiene un dolor de cabeza repentino o muy severo?",
+            vision_change: "¿Tiene visión borrosa o doble?",
+            dizziness: "¿Se siente mareado o inestable?",
+            confusion: "¿Se siente confundido o desorientado?",
+        },
+    },
+    arm: {
+        en: {
+            arm_pain: "Do you have pain or swelling in your arm or shoulder?",
+            numbness: "Do you have numbness or tingling in your arm or hand?",
+            injury: "Did you injure or fall on your arm recently?",
+            weakness: "Do you have weakness or inability to move your arm?",
+        },
+        fr: {
+            arm_pain: "Avez-vous de la douleur ou un gonflement dans le bras ou l'epaule ?",
+            numbness: "Avez-vous un engourdissement ou des picotements dans le bras ou la main ?",
+            injury: "Vous etes-vous blesse ou avez-vous fait une chute sur le bras recemment ?",
+            weakness: "Avez-vous une faiblesse ou une incapacite a bouger le bras ?",
+        },
+        ar: {
+            arm_pain: "هل تعاني من ألم أو تورم في ذراعك أو كتفك؟",
+            numbness: "هل تشعر بتنميل أو وخز في ذراعك أو يدك؟",
+            injury: "هل أصبت أو سقطت على ذراعك مؤخراً؟",
+            weakness: "هل تعاني من ضعف أو عدم قدرة على تحريك ذراعك؟",
+        },
+        pa: {
+            arm_pain: "ਕੀ ਤੁਹਾਡੀ ਬਾਂਹ ਜਾਂ ਮੋਢੇ ਵਿੱਚ ਦਰਦ ਜਾਂ ਸੋਜ ਹੈ?",
+            numbness: "ਕੀ ਤੁਹਾਡੀ ਬਾਂਹ ਜਾਂ ਹੱਥ ਸੁੰਨ ਹੈ?",
+            injury: "ਕੀ ਤੁਸੀਂ ਹਾਲ ਹੀ ਵਿੱਚ ਬਾਂਹ 'ਤੇ ਡਿੱਗੇ ਜਾਂ ਸੱਟ ਲੱਗੀ?",
+            weakness: "ਕੀ ਤੁਹਾਡੀ ਬਾਂਹ ਕਮਜ਼ੋਰ ਹੈ ਜਾਂ ਹਿੱਲ ਨਹੀਂ ਰਹੀ?",
+        },
+        zh: {
+            arm_pain: "您的手臂或肩膀有疼痛或肿胀吗？",
+            numbness: "您的手臂或手有麻木或刺痛感吗？",
+            injury: "您最近有跌倒或手臂受伤吗？",
+            weakness: "您的手臂有无力感或无法移动吗？",
+        },
+        es: {
+            arm_pain: "¿Tiene dolor o inflamación en el brazo o el hombro?",
+            numbness: "¿Tiene entumecimiento u hormigueo en el brazo o la mano?",
+            injury: "¿Se lesionó o cayó sobre el brazo recientemente?",
+            weakness: "¿Tiene debilidad o incapacidad para mover el brazo?",
+        },
+    },
+    leg: {
+        en: {
+            leg_pain: "Do you have pain or swelling in your leg, knee, or hip?",
+            leg_injury: "Did you injure your leg, knee, or ankle recently?",
+            leg_numbness: "Do you have numbness or weakness in your leg or foot?",
+            cannot_walk: "Are you unable to walk or bear weight on your leg?",
+        },
+        fr: {
+            leg_pain: "Avez-vous de la douleur ou un gonflement dans la jambe, le genou ou la hanche ?",
+            leg_injury: "Vous etes-vous blesse a la jambe, au genou ou a la cheville recemment ?",
+            leg_numbness: "Avez-vous un engourdissement ou une faiblesse dans la jambe ou le pied ?",
+            cannot_walk: "Etes-vous incapable de marcher ou de mettre du poids sur la jambe ?",
+        },
+        ar: {
+            leg_pain: "هل تعاني من ألم أو تورم في ساقك أو ركبتك أو وركك؟",
+            leg_injury: "هل أصبت في ساقك أو ركبتك أو كاحلك مؤخراً؟",
+            leg_numbness: "هل تشعر بتنميل أو ضعف في ساقك أو قدمك؟",
+            cannot_walk: "هل أنت غير قادر على المشي أو تحمل وزنك على ساقك؟",
+        },
+        pa: {
+            leg_pain: "ਕੀ ਤੁਹਾਡੀ ਲੱਤ, ਗੋਡੇ ਜਾਂ ਕਮਰ ਵਿੱਚ ਦਰਦ ਜਾਂ ਸੋਜ ਹੈ?",
+            leg_injury: "ਕੀ ਤੁਸੀਂ ਹਾਲ ਹੀ ਵਿੱਚ ਲੱਤ, ਗੋਡੇ ਜਾਂ ਗਿੱਟੇ ਵਿੱਚ ਸੱਟ ਲਗਾਈ?",
+            leg_numbness: "ਕੀ ਤੁਹਾਡੀ ਲੱਤ ਜਾਂ ਪੈਰ ਸੁੰਨ ਜਾਂ ਕਮਜ਼ੋਰ ਹੈ?",
+            cannot_walk: "ਕੀ ਤੁਸੀਂ ਲੱਤ 'ਤੇ ਭਾਰ ਪਾ ਕੇ ਚੱਲ ਨਹੀਂ ਸਕਦੇ?",
+        },
+        zh: {
+            leg_pain: "您的腿部、膝盖或髋部有疼痛或肿胀吗？",
+            leg_injury: "您最近有腿、膝盖或脚踝受伤吗？",
+            leg_numbness: "您的腿或脚有麻木或无力感吗？",
+            cannot_walk: "您无法行走或腿部无法承重吗？",
+        },
+        es: {
+            leg_pain: "¿Tiene dolor o inflamación en la pierna, rodilla o cadera?",
+            leg_injury: "¿Se lesionó la pierna, rodilla o tobillo recientemente?",
+            leg_numbness: "¿Tiene entumecimiento o debilidad en la pierna o el pie?",
+            cannot_walk: "¿No puede caminar o cargar peso en la pierna?",
+        },
+    },
+    abdomen: {
+        en: {
+            abdominal_pain: "Do you have stomach or abdominal pain?",
+            vomiting: "Have you been vomiting?",
+            pain_duration: "Has the pain lasted more than 6 hours?",
+            fever: "Do you have a fever?",
+        },
+        fr: {
+            abdominal_pain: "Avez-vous des douleurs d'estomac ou abdominales ?",
+            vomiting: "Avez-vous vomi ?",
+            pain_duration: "La douleur dure-t-elle depuis plus de 6 heures ?",
+            fever: "Avez-vous de la fievre ?",
+        },
+        ar: {
+            abdominal_pain: "هل تعاني من آلام في المعدة أو البطن؟",
+            vomiting: "هل كنت تتقيأ؟",
+            pain_duration: "هل استمر الألم أكثر من 6 ساعات؟",
+            fever: "هل لديك حمى؟",
+        },
+        pa: {
+            abdominal_pain: "ਕੀ ਤੁਹਾਡੇ ਪੇਟ ਵਿੱਚ ਦਰਦ ਹੈ?",
+            vomiting: "ਕੀ ਤੁਸੀਂ ਉਲਟੀਆਂ ਕੀਤੀਆਂ ਹਨ?",
+            pain_duration: "ਕੀ ਦਰਦ 6 ਘੰਟਿਆਂ ਤੋਂ ਵੱਧ ਸਮੇਂ ਤੋਂ ਹੈ?",
+            fever: "ਕੀ ਤੁਹਾਨੂੰ ਬੁਖਾਰ ਹੈ?",
+        },
+        zh: {
+            abdominal_pain: "您有胃痛或腹痛吗？",
+            vomiting: "您有呕吐吗？",
+            pain_duration: "疼痛是否持续超过6小时？",
+            fever: "您有发烧吗？",
+        },
+        es: {
+            abdominal_pain: "¿Tiene dolor de estómago o abdominal?",
+            vomiting: "¿Ha estado vomitando?",
+            pain_duration: "¿El dolor ha durado más de 6 horas?",
+            fever: "¿Tiene fiebre?",
+        },
+    },
+    other: {
+        en: {
+            fainting: "Did you faint, pass out, or nearly pass out?",
+            allergic_reaction: "Do you have a rash, hives, or a swollen face?",
+            fever_other: "Do you have a high fever (above 38.5°C / 101°F)?",
+            general_weakness: "Are you feeling very weak or unusually tired?",
+        },
+        fr: {
+            fainting: "Avez-vous perdu connaissance ou failli vous evanouir ?",
+            allergic_reaction: "Avez-vous une eruption cutanee, de l'urticaire ou un visage gonfle ?",
+            fever_other: "Avez-vous une forte fievre (au-dessus de 38,5°C) ?",
+            general_weakness: "Vous sentez-vous tres faible ou inhabituellement fatigue ?",
+        },
+        ar: {
+            fainting: "هل أغمي عليك أو كادت أن تفقد وعيك؟",
+            allergic_reaction: "هل لديك طفح جلدي أو شرى أو تورم في الوجه؟",
+            fever_other: "هل لديك حمى شديدة (فوق 38.5°م)؟",
+            general_weakness: "هل تشعر بضعف شديد أو تعب غير عادي؟",
+        },
+        pa: {
+            fainting: "ਕੀ ਤੁਸੀਂ ਬੇਹੋਸ਼ ਹੋਏ ਜਾਂ ਹੋਣ ਵਾਲੇ ਸੀ?",
+            allergic_reaction: "ਕੀ ਤੁਹਾਡੇ ਚਿਹਰੇ 'ਤੇ ਧੱਫੜ ਜਾਂ ਸੋਜ ਹੈ?",
+            fever_other: "ਕੀ ਤੁਹਾਨੂੰ ਉੱਚ ਬੁਖਾਰ (38.5°C ਤੋਂ ਵੱਧ) ਹੈ?",
+            general_weakness: "ਕੀ ਤੁਸੀਂ ਬਹੁਤ ਕਮਜ਼ੋਰ ਜਾਂ ਥਕੇ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?",
+        },
+        zh: {
+            fainting: "您是否晕倒、失去意识或差点失去意识？",
+            allergic_reaction: "您有皮疹、荨麻疹或面部肿胀吗？",
+            fever_other: "您有高烧（超过38.5°C）吗？",
+            general_weakness: "您感到非常虚弱或异常疲劳吗？",
+        },
+        es: {
+            fainting: "¿Se desmayó, perdió el conocimiento o casi lo perdió?",
+            allergic_reaction: "¿Tiene sarpullido, urticaria o cara hinchada?",
+            fever_other: "¿Tiene fiebre alta (por encima de 38.5°C / 101°F)?",
+            general_weakness: "¿Se siente muy débil o inusualmente cansado?",
+        },
+    },
 }
 
 function translateText(
@@ -1218,12 +1410,6 @@ function AgeCamera({
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                     padding: 24, textAlign: "center", gap: 12,
                 }}>
-                    <div style={{
-                        width: 64, height: 64, borderRadius: 20,
-                        background: "rgba(37,99,235,0.18)", color: "#BFDBFE",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 20, fontWeight: 800,
-                    }} />
                     <div style={{ color: "#F8FAFC", fontSize: 18, fontWeight: 700 }}>
                         {tr("piWindowTitle")}
                     </div>
@@ -1880,7 +2066,11 @@ export default function KioskApp() {
     }
 
     const handleBodySelect = (part: string) => {
-        const nextQuestions = BODY_QUESTIONS[part] || BODY_QUESTIONS.other
+        const qMap =
+            BODY_QUESTIONS[part]?.[lang] ||
+            BODY_QUESTIONS[part]?.en ||
+            BODY_QUESTIONS.other.en
+        const nextQuestions = Object.entries(qMap).map(([id, text]) => ({ id, text }))
         setBodyPart(part)
         setQuestions(nextQuestions)
         setAnswers({})
@@ -2032,7 +2222,6 @@ export default function KioskApp() {
     if (step === "language") return (
         <Screen rtl={isRTL}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
-                <Logo size={42} />
                 <h1 style={{ fontSize: 26, fontWeight: 700, margin: "20px 0 8px", color: C.slate }}>
                     {t.welcome}
                 </h1>
@@ -2064,12 +2253,6 @@ export default function KioskApp() {
         <Screen rtl={isRTL}>
             <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
             <div style={{ ...card, textAlign: "center", marginBottom: 16 }}>
-                <div style={{
-                    width: 52, height: 52, margin: "0 auto 14px",
-                    borderRadius: 16, background: C.blueLight,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: C.blue, fontSize: 18, fontWeight: 800,
-                }} />
                 <h2 style={{ fontSize: scale(22), fontWeight: 700, color: C.slate, margin: "0 0 10px" }}>
                     {t.cameraModeTitle}
                 </h2>
@@ -2117,12 +2300,6 @@ export default function KioskApp() {
         <Screen rtl={isRTL} kidMode={isKidMode}>
             <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
             <div style={themedCard({ textAlign: "center", marginBottom: 16 })}>
-                <div style={{
-                    width: 52, height: 52, margin: "0 auto 14px",
-                    borderRadius: 16, background: isKidMode ? C.pinkLight : C.blueLight,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: isKidMode ? C.pinkDark : C.blue, fontSize: 18, fontWeight: 800,
-                }} />
                 <p style={{ color: C.gray, fontSize: scale(16), marginBottom: 8 }}>
                     {cameraMode === "pi" ? t.detecting : t.appManualAgeMode}
                 </p>
@@ -2441,7 +2618,7 @@ function Screen({
         }}>
             <div style={{ width: "100%", maxWidth: 480 }}>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-                    <Logo size={32} />
+                    <Logo size={36} />
                 </div>
                 {children}
             </div>

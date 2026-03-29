@@ -289,7 +289,7 @@ def speak():
         if not text:
             return jsonify({"status": "skipped"})
 
-        lang_map = {"en": "en", "ar": "ar", "fr": "fr", "pa": "pa", "zh": "zh", "es": "es"}
+        lang_map = {"en": "en", "ar": "ar", "fr": "fr", "pa": "pa", "zh": "zh-CN", "es": "es"}
         gtts_lang = lang_map.get(lang, "en")
 
         tts = gTTS(text=text, lang=gtts_lang, slow=False)
