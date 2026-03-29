@@ -2,9 +2,20 @@ import os
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-import tflite_runtime.interpreter as tflite
 from collections import Counter
 import time
+
+try:
+    import tflite_runtime.interpreter as tflite
+except ImportError:
+    # LiteRT is Google's current replacement for tflite-runtime and has
+    # newer ARM wheels, including Python 3.13 aarch64 builds.
+    from ai_edge_litert.interpreter import Interpreter as LiteRTInterpreter
+
+    class _LiteRTModule:
+        Interpreter = LiteRTInterpreter
+
+    tflite = _LiteRTModule()
 
 # --- Configuration ---
 MODEL_PATH = "age_model.tflite"
