@@ -24,6 +24,7 @@ import os
 import json
 import tempfile
 import time
+from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
 from dotenv import load_dotenv
@@ -35,7 +36,9 @@ try:
 except ImportError:
     SUPABASE_AVAILABLE = False
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})

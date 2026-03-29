@@ -11,3 +11,6 @@ dataset/
 .DS_Store
 Thumbs.db
 .env
+.env.local
+frontend/.env.local
+dashboard/.env.local

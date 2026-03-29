@@ -1,12 +1,17 @@
 import os
+from pathlib import Path
 from uuid import uuid4
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from supabase import create_client
+
 from detect_age_pi import AgeScanner
 
-load_dotenv(dotenv_path=".env")
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env")
 
 app = FastAPI()
 scanner = AgeScanner()
@@ -59,9 +64,10 @@ def scan_age():
     return {
         "success": True,
         "db_id": db_id,
-        "age_bucket": result["age_bucket"],
-        "age_group": result["age_group"],
-        "confidence": result["confidence"],
-        "next_step": result["next_step"],
-        "samples_used": result["samples_used"]
+        "age_bucket": result.get("age_bucket"),
+        "age_group": result.get("age_group"),
+        "confidence": result.get("confidence"),
+        "next_step": result.get("next_step"),
+        "samples_used": result.get("samples_used"),
+        "fallback": result.get("fallback", False),
     }
