@@ -130,11 +130,29 @@ def score_answers(answers: dict, age_group: str = "Adult") -> dict:
     if answers.get("chest_pain"):           score += 3
     if answers.get("difficulty_breathing"): score += 3
     if answers.get("radiating_pain"):       score += 2
+    if answers.get("sweating"):             score += 1
     if answers.get("dizziness"):            score += 2
     if answers.get("severe_pain"):          score += 2
+    if answers.get("severe_headache"):      score += 2
+    if answers.get("vision_change"):        score += 1
+    if answers.get("confusion"):            score += 3
+    if answers.get("arm_pain"):             score += 1
+    if answers.get("numbness"):             score += 2
+    if answers.get("injury"):               score += 1
+    if answers.get("weakness"):             score += 2
+    if answers.get("leg_pain"):             score += 1
+    if answers.get("leg_injury"):           score += 1
+    if answers.get("leg_numbness"):         score += 2
+    if answers.get("cannot_walk"):          score += 2
+    if answers.get("abdominal_pain"):       score += 2
     if answers.get("fever"):                score += 1
+    if answers.get("fever_other"):          score += 2
     if answers.get("vomiting"):             score += 1
+    if answers.get("pain_duration"):        score += 1
     if answers.get("headache"):             score += 1
+    if answers.get("fainting"):             score += 3
+    if answers.get("allergic_reaction"):    score += 3
+    if answers.get("general_weakness"):     score += 1
 
     # Age adjustment
     if age_group in ("Child", "Senior"):
@@ -403,6 +421,7 @@ def queue_post():
             "health_id": data.get("health_id", "N/A"),
             "lang": data.get("lang", "en"),
             "age_group": age_group,
+            "body_part": data.get("body_part", "other"),
             "answers": answers,
             "ai_priority": scoring["priority"],
             "nurse_priority": None,
@@ -411,7 +430,14 @@ def queue_post():
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
-        saved, created = finalize_patient_row(int(patient_id) if patient_id else None, row)
+        try:
+            saved, created = finalize_patient_row(int(patient_id) if patient_id else None, row)
+        except Exception as queue_error:
+            if "body_part" not in str(queue_error):
+                raise
+            print("[/queue POST] body_part column missing in patients table, retrying without it")
+            row.pop("body_part", None)
+            saved, created = finalize_patient_row(int(patient_id) if patient_id else None, row)
         print(f"[/queue POST] {'Added' if created else 'Updated'}: {row['name']} → Priority {scoring['priority']}")
         return jsonify({"success": True, "id": saved.get("id"), "ai_priority": scoring["priority"]}), 201
 

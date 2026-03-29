@@ -4,6 +4,7 @@ create table if not exists public.patients (
     health_id text not null default 'N/A',
     lang text not null default 'en',
     age_group text not null default 'Adult',
+    body_part text not null default 'other',
     answers jsonb not null default '{}'::jsonb,
     ai_priority integer not null default 1,
     nurse_priority integer null,

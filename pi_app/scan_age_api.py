@@ -81,34 +81,39 @@ def decode_frame(image_b64: str):
 def open_camera_capture():
     preferred_indices = [CAMERA_INDEX, 1, 2, 3]
     seen = set()
-    api_preference = cv2.CAP_V4L2 if hasattr(cv2, "CAP_V4L2") else cv2.CAP_ANY
+    api_preferences = [cv2.CAP_ANY]
+    if hasattr(cv2, "CAP_V4L2"):
+        api_preferences.insert(0, cv2.CAP_V4L2)
 
     for camera_index in preferred_indices:
         if camera_index in seen:
             continue
         seen.add(camera_index)
 
-        cap = cv2.VideoCapture(camera_index, api_preference)
-        try:
-            if hasattr(cv2, "CAP_PROP_BUFFERSIZE"):
-                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        for api_preference in api_preferences:
+            cap = cv2.VideoCapture(camera_index, api_preference)
+            try:
+                if hasattr(cv2, "CAP_PROP_BUFFERSIZE"):
+                    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-            if not cap.isOpened():
-                continue
+                if not cap.isOpened():
+                    cap.release()
+                    continue
 
-            frame = None
-            for _ in range(8):
-                ret, candidate = cap.read()
-                if ret and candidate is not None and getattr(candidate, "size", 0) > 0:
-                    frame = candidate
+                frame = None
+                for _ in range(15):
+                    ret, candidate = cap.read()
+                    if ret and candidate is not None and getattr(candidate, "size", 0) > 0:
+                        frame = candidate
+                    time.sleep(0.04)
 
-            if frame is not None:
-                return cap, frame, camera_index
-        except Exception:
+                if frame is not None:
+                    return cap, frame, camera_index
+            except Exception:
+                cap.release()
+                raise
+
             cap.release()
-            raise
-
-        cap.release()
 
     return None, None, None
 
@@ -137,6 +142,16 @@ class CameraFeed:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=1.0)
         self._thread = None
+
+    def restart(self):
+        self.stop()
+        with self._lock:
+            self._last_frame = None
+            self._last_frame_at = 0.0
+            self._recent_frames.clear()
+            self._camera_index = None
+            self._error = "Restarting camera feed"
+        self.start()
 
     def _reader_loop(self):
         cap = None
@@ -234,11 +249,7 @@ legacy_scan_lock = Lock()
 legacy_scan_active = Event()
 
 
-def capture_camera_jpeg():
-    frame, camera_index, error = camera_feed.get_latest_frame(wait_timeout=1.2)
-    if frame is None:
-        return None, None, None, error or "Could not open USB camera"
-
+def encode_camera_frame(frame, camera_index):
     ok, encoded = cv2.imencode(".jpg", frame)
     if not ok:
         return None, None, None, "Could not encode camera frame"
@@ -250,6 +261,47 @@ def capture_camera_jpeg():
     }
     face_state = inspect_face_state(frame)
     return encoded.tobytes(), metadata, face_state, None
+
+
+def capture_camera_jpeg_once():
+    cap, frame, camera_index = open_camera_capture()
+    if cap is None or frame is None:
+        return None, None, None, "Could not open USB camera"
+
+    try:
+        for _ in range(3):
+            ret, candidate = cap.read()
+            if ret and candidate is not None and getattr(candidate, "size", 0) > 0:
+                frame = candidate
+            time.sleep(0.03)
+    finally:
+        cap.release()
+
+    return encode_camera_frame(frame, camera_index)
+
+
+def capture_camera_jpeg():
+    frame, camera_index, error = camera_feed.get_latest_frame(wait_timeout=2.0)
+    if frame is not None:
+        return encode_camera_frame(frame, camera_index)
+
+    record_camera_debug("camera_feed_retry", {"error": error or "Could not open USB camera"})
+    camera_feed.restart()
+
+    frame, camera_index, retry_error = camera_feed.get_latest_frame(wait_timeout=2.4)
+    if frame is not None:
+        return encode_camera_frame(frame, camera_index)
+
+    jpeg_bytes, metadata, face_state, direct_error = capture_camera_jpeg_once()
+    if jpeg_bytes is not None:
+        record_camera_debug(
+            "camera_frame_direct_capture",
+            {"camera_index": metadata.get("camera_index")},
+        )
+        return jpeg_bytes, metadata, face_state, None
+
+    final_error = direct_error or retry_error or error or "Could not open USB camera"
+    return None, None, None, final_error
 
 
 def capture_camera_frames(frame_count=5, frame_delay=0.08):
@@ -282,6 +334,8 @@ def run_legacy_window_scan():
     finally:
         legacy_scan_active.clear()
         legacy_scan_lock.release()
+        time.sleep(0.25)
+        camera_feed.restart()
 
 
 def inspect_face_state(frame):
@@ -327,6 +381,11 @@ def save_scan_result(result, session_id=None, device_name="raspberry-pi"):
     return row["id"]
 
 
+@app.on_event("startup")
+def startup_camera_feed():
+    camera_feed.start()
+
+
 @app.on_event("shutdown")
 def shutdown_camera_feed():
     camera_feed.stop()
@@ -339,6 +398,11 @@ def health():
 
 @app.get("/camera-frame")
 def camera_frame():
+    if legacy_scan_active.is_set():
+        deadline = time.time() + 0.8
+        while legacy_scan_active.is_set() and time.time() < deadline:
+            time.sleep(0.05)
+
     if legacy_scan_active.is_set():
         message = "Age scan is running on the Pi display"
         return Response(

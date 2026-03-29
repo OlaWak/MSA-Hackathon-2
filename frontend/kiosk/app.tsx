@@ -156,6 +156,16 @@ const EXTRA_T: Record<string, Record<string, string>> = {
         startNewCheckin: "Start New Check-in",
         ageDetected: "{age} detected",
         back: "Back",
+        whereHurts: "Where does it hurt?",
+        whereHurtsDesc: "Tap the area on the body that needs attention before the questions start.",
+        chest: "Chest",
+        head: "Head / Face",
+        arm: "Arm / Shoulder",
+        leg: "Leg / Knee / Hip",
+        abdomen: "Abdomen",
+        other: "Other / General",
+        otherDesc: "(Vomiting, fainting, fever, rash...)",
+        continueToQuestions: "Continue",
     },
     fr: {
         connectingPiCamera: "Connexion a la camera Pi...",
@@ -489,6 +499,45 @@ const TRIAGE_Q: Record<string, Record<string, string>> = {
 
 const QUESTION_IDS = Object.keys(TRIAGE_Q.en)
 
+const BODY_QUESTIONS: Record<string, Array<{ id: string; text: string }>> = {
+    chest: [
+        { id: "chest_pain", text: "Do you have chest pain or pressure?" },
+        { id: "radiating_pain", text: "Does the pain spread to your arm, jaw, or back?" },
+        { id: "difficulty_breathing", text: "Are you having difficulty breathing?" },
+        { id: "sweating", text: "Are you sweating or feeling clammy?" },
+    ],
+    head: [
+        { id: "severe_headache", text: "Do you have a sudden or very severe headache?" },
+        { id: "vision_change", text: "Do you have blurred or double vision?" },
+        { id: "dizziness", text: "Do you feel dizzy or unsteady?" },
+        { id: "confusion", text: "Are you feeling confused or disoriented?" },
+    ],
+    arm: [
+        { id: "arm_pain", text: "Do you have pain or swelling in your arm or shoulder?" },
+        { id: "numbness", text: "Do you have numbness or tingling in your arm or hand?" },
+        { id: "injury", text: "Did you injure or fall on your arm recently?" },
+        { id: "weakness", text: "Do you have weakness or inability to move your arm?" },
+    ],
+    leg: [
+        { id: "leg_pain", text: "Do you have pain or swelling in your leg, knee, or hip?" },
+        { id: "leg_injury", text: "Did you injure your leg, knee, or ankle recently?" },
+        { id: "leg_numbness", text: "Do you have numbness or weakness in your leg or foot?" },
+        { id: "cannot_walk", text: "Are you unable to walk or bear weight on your leg?" },
+    ],
+    abdomen: [
+        { id: "abdominal_pain", text: "Do you have stomach or abdominal pain?" },
+        { id: "vomiting", text: "Have you been vomiting?" },
+        { id: "pain_duration", text: "Has the pain lasted more than 6 hours?" },
+        { id: "fever", text: "Do you have a fever?" },
+    ],
+    other: [
+        { id: "fainting", text: "Did you faint, pass out, or nearly pass out?" },
+        { id: "allergic_reaction", text: "Do you have a rash, hives, or a swollen face?" },
+        { id: "fever_other", text: "Do you have a high fever?" },
+        { id: "general_weakness", text: "Are you feeling very weak or unusually tired?" },
+    ],
+}
+
 function translateText(
     t: Record<string, string>,
     key: string,
@@ -632,6 +681,114 @@ function ProgressBar({
                         : `linear-gradient(90deg, ${C.blue} 0%, #60A5FA 100%)`,
                     borderRadius: 99, transition: "width 0.4s ease",
                 }} />
+            </div>
+        </div>
+    )
+}
+
+function BodySilhouette({
+    selected,
+    onSelect,
+    t,
+}: {
+    selected: string | null
+    onSelect: (part: string) => void
+    t: Record<string, string>
+}) {
+    const regions: Array<{ id: string; x: number; y: number; w: number; h: number }> = [
+        { id: "head", x: 148, y: 12, w: 64, h: 68 },
+        { id: "chest", x: 120, y: 90, w: 120, h: 90 },
+        { id: "abdomen", x: 120, y: 185, w: 120, h: 80 },
+        { id: "arm", x: 58, y: 88, w: 54, h: 160 },
+        { id: "arm", x: 248, y: 88, w: 54, h: 160 },
+        { id: "leg", x: 110, y: 270, w: 60, h: 160 },
+        { id: "leg", x: 190, y: 270, w: 60, h: 160 },
+    ]
+
+    const labels: Record<string, [number, number]> = {
+        head: [180, 46],
+        chest: [180, 140],
+        abdomen: [180, 225],
+        arm: [88, 170],
+        leg: [150, 345],
+    }
+
+    return (
+        <div style={{ position: "relative", display: "inline-block" }}>
+            <svg viewBox="0 0 360 450" width={280} height={350} style={{ display: "block", margin: "0 auto" }}>
+                <g fill="#E2E8F0" stroke="none">
+                    <ellipse cx={180} cy={46} rx={34} ry={38} />
+                    <rect x={165} y={80} width={30} height={20} rx={6} />
+                    <rect x={122} y={96} width={116} height={168} rx={16} />
+                    <rect x={60} y={96} width={56} height={150} rx={14} />
+                    <rect x={244} y={96} width={56} height={150} rx={14} />
+                    <rect x={118} y={258} width={58} height={172} rx={14} />
+                    <rect x={184} y={258} width={58} height={172} rx={14} />
+                </g>
+
+                {regions.map((region, idx) => {
+                    const isSelected = selected === region.id
+                    return (
+                        <rect
+                            key={`${region.id}-${idx}`}
+                            x={region.x}
+                            y={region.y}
+                            width={region.w}
+                            height={region.h}
+                            rx={12}
+                            fill={isSelected ? "rgba(37,99,235,0.35)" : "rgba(37,99,235,0)"}
+                            stroke={isSelected ? C.blue : "transparent"}
+                            strokeWidth={2}
+                            style={{ cursor: "pointer", transition: "fill 0.15s" }}
+                            onClick={() => onSelect(region.id)}
+                            onMouseEnter={e => {
+                                if (!isSelected) (e.currentTarget as SVGRectElement).style.fill = "rgba(37,99,235,0.15)"
+                            }}
+                            onMouseLeave={e => {
+                                if (!isSelected) (e.currentTarget as SVGRectElement).style.fill = "rgba(37,99,235,0)"
+                            }}
+                        />
+                    )
+                })}
+
+                {Object.entries(labels).map(([id, [x, y]]) => {
+                    const isSelected = selected === id
+                    const label = t[id] ? t[id].split(" ")[0] : id
+                    return (
+                        <text
+                            key={id}
+                            x={x}
+                            y={y + 4}
+                            textAnchor="middle"
+                            fontSize={10}
+                            fontWeight={isSelected ? 700 : 500}
+                            fill={isSelected ? C.blue : "#64748B"}
+                            style={{ pointerEvents: "none", userSelect: "none" }}
+                        >
+                            {label}
+                        </text>
+                    )
+                })}
+            </svg>
+
+            <div style={{ marginTop: 10, textAlign: "center" }}>
+                <button
+                    onClick={() => onSelect("other")}
+                    style={{
+                        ...btn(
+                            selected === "other" ? C.blue : C.lightGray,
+                            selected === "other" ? "#fff" : C.slate,
+                            `1px solid ${selected === "other" ? C.blue : C.border}`,
+                        ),
+                        width: 240,
+                        fontSize: 14,
+                        padding: "10px 16px",
+                        display: "inline-flex",
+                    }}
+                >
+                    {t.other}
+                </button>
+                <div style={{ fontSize: 11, color: C.gray, marginTop: 6 }}>{t.otherDesc}</div>
             </div>
         </div>
     )
@@ -1615,7 +1772,7 @@ function BackButton({
 }
 
 // ── Main App ───────────────────────────────────────────────────
-type Step = "language" | "camera" | "age" | "card" | "questions" | "complete"
+type Step = "language" | "camera" | "age" | "card" | "body" | "questions" | "complete"
 
 export default function KioskApp() {
     const [step, setStep] = useState<Step>("language")
@@ -1629,6 +1786,8 @@ export default function KioskApp() {
     const [patientName, setPatientName] = useState("")
     const [healthId, setHealthId] = useState("")
     const [patientId, setPatientId] = useState<number | null>(null)
+    const [bodyPart, setBodyPart] = useState<string | null>(null)
+    const [questions, setQuestions] = useState<Array<{ id: string; text: string }>>([])
     const [qIndex, setQIndex] = useState(0)
     const [answers, setAnswers] = useState<Record<string, boolean>>({})
     const [submitting, setSubmitting] = useState(false)
@@ -1713,19 +1872,32 @@ export default function KioskApp() {
             setHealthId(d.health_id !== "N/A" ? d.health_id : "")
         } catch { }
         setScanningCard(false)
+        setBodyPart(null)
+        setQuestions([])
+        setAnswers({})
+        setQIndex(0)
+        setStep("body")
+    }
+
+    const handleBodySelect = (part: string) => {
+        const nextQuestions = BODY_QUESTIONS[part] || BODY_QUESTIONS.other
+        setBodyPart(part)
+        setQuestions(nextQuestions)
+        setAnswers({})
+        setQIndex(0)
         setStep("questions")
-        speak(TRIAGE_Q[lang]?.[QUESTION_IDS[0]] || TRIAGE_Q.en[QUESTION_IDS[0]])
+        if (nextQuestions.length > 0) void speak(nextQuestions[0].text)
     }
 
     const handleAnswer = async (id: string, val: boolean) => {
         const newAnswers = { ...answers, [id]: val }
         setAnswers(newAnswers)
 
-        if (qIndex < QUESTION_IDS.length - 1) {
-            const nextId = QUESTION_IDS[qIndex + 1]
+        if (qIndex < questions.length - 1) {
+            const nextQuestion = questions[qIndex + 1]
             setTimeout(() => {
                 setQIndex(i => i + 1)
-                speak(TRIAGE_Q[lang]?.[nextId] || TRIAGE_Q.en[nextId])
+                void speak(nextQuestion.text)
             }, 250)
         } else {
             setSubmitting(true)
@@ -1739,6 +1911,7 @@ export default function KioskApp() {
                         health_id: healthId || manualId || "N/A",
                         lang,
                         age_group: ageGroup || "Adult",
+                        body_part: bodyPart || "other",
                         answers: newAnswers,
                     }),
                 })
@@ -1756,7 +1929,8 @@ export default function KioskApp() {
         }
         setStep("language"); setLang("en"); setCameraMode(null); setAgeGroup(null)
         setManualName(""); setManualId(""); setPatientName(""); setHealthId("")
-        setQIndex(0); setAnswers({}); setCardMode("scan"); setScanningCard(false)
+        setBodyPart(null); setQuestions([]); setQIndex(0); setAnswers({})
+        setCardMode("scan"); setScanningCard(false)
     }
 
     const getHistoryView = () => {
@@ -1780,6 +1954,15 @@ export default function KioskApp() {
             setCardMode("scan")
             setAgeGroup(null)
             setStep("age")
+            return true
+        }
+
+        if (step === "body") {
+            setBodyPart(null)
+            setQuestions([])
+            setQIndex(0)
+            setAnswers({})
+            setStep("card")
             return true
         }
 
@@ -2081,8 +2264,11 @@ export default function KioskApp() {
                     </div>
                     <button
                         onClick={() => {
-                            setStep("questions")
-                            speak(TRIAGE_Q[lang]?.[QUESTION_IDS[0]] || TRIAGE_Q.en[QUESTION_IDS[0]])
+                            setBodyPart(null)
+                            setQuestions([])
+                            setAnswers({})
+                            setQIndex(0)
+                            setStep("body")
                         }}
                         disabled={!manualName || !manualId}
                         style={actionBtn(manualName && manualId ? primaryAction : C.border)}
@@ -2097,18 +2283,45 @@ export default function KioskApp() {
         </Screen>
     )
 
-    if (step === "questions") {
-        const qId = QUESTION_IDS[qIndex]
-        const qText = TRIAGE_Q[lang]?.[qId] || TRIAGE_Q.en[qId]
+    if (step === "body") {
         return (
             <Screen rtl={isRTL} kidMode={isKidMode}>
-                <ProgressBar step={qIndex + 1} total={QUESTION_IDS.length} kidMode={isKidMode} />
+                <BackButton label={t.back} onClick={goBack} rtl={isRTL} fontScale={fs} />
+                <div style={themedCard({ marginTop: isKidMode ? 12 : 16 })}>
+                    <h2 style={{ fontSize: scale(22), fontWeight: 700, color: C.slate, textAlign: "center", margin: "0 0 8px" }}>
+                        {t.whereHurts}
+                    </h2>
+                    <p style={{ color: C.gray, fontSize: scale(14), textAlign: "center", margin: "0 0 22px", lineHeight: 1.5 }}>
+                        {t.whereHurtsDesc}
+                    </p>
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                        <BodySilhouette selected={bodyPart} onSelect={setBodyPart} t={t} />
+                    </div>
+                    {bodyPart && (
+                        <button
+                            onClick={() => handleBodySelect(bodyPart)}
+                            style={{ ...actionBtn(primaryAction), marginTop: 22 }}
+                        >
+                            {t.continueToQuestions}
+                        </button>
+                    )}
+                </div>
+            </Screen>
+        )
+    }
+
+    if (step === "questions" && questions.length > 0) {
+        const q = questions[qIndex]
+        const qText = q.text
+        return (
+            <Screen rtl={isRTL} kidMode={isKidMode}>
+                <ProgressBar step={qIndex + 1} total={questions.length} kidMode={isKidMode} />
                 {isKidMode && (
                     <KidGraphicBanner
                         badge={t.child}
                         title={qText}
                         step={qIndex + 1}
-                        total={QUESTION_IDS.length}
+                        total={questions.length}
                         variant={qIndex}
                     />
                 )}
@@ -2148,14 +2361,14 @@ export default function KioskApp() {
                     </div>
                     <div style={{ display: "flex", gap: 16 }}>
                         <button
-                            onClick={() => handleAnswer(qId, true)}
+                            onClick={() => handleAnswer(q.id, true)}
                             disabled={submitting}
                             style={{ ...actionBtn(primaryAction), flex: 1, fontSize: scale(20), padding: `${Math.round(20 * fs)}px`, opacity: submitting ? 0.6 : 1 }}
                         >
                             {t.yes}
                         </button>
                         <button
-                            onClick={() => handleAnswer(qId, false)}
+                            onClick={() => handleAnswer(q.id, false)}
                             disabled={submitting}
                             style={{ ...actionBtn(secondaryAction), flex: 1, fontSize: scale(20), padding: `${Math.round(20 * fs)}px`, opacity: submitting ? 0.6 : 1 }}
                         >
