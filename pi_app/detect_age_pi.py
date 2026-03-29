@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from collections import Counter
 import time
+from pathlib import Path
 
 try:
     import tflite_runtime.interpreter as tflite
@@ -18,8 +19,9 @@ except ImportError:
     tflite = _LiteRTModule()
 
 # --- Configuration ---
-MODEL_PATH = "age_model.tflite"
-LABELS_PATH = "labels.txt"
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = str(BASE_DIR / "age_model.tflite")
+LABELS_PATH = str(BASE_DIR / "labels.txt")
 CAMERA_INDEX = 0
 IMG_SIZE = 128
 
@@ -27,7 +29,7 @@ IMG_SIZE = 128
 FONT_CANDIDATES = [
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-    "DMSans-Bold.ttf",
+    str(BASE_DIR / "DMSans-Bold.ttf"),
 ]
 
 BOX_COLOR_READY = (0, 255, 0)
@@ -142,6 +144,56 @@ class AgeScanner:
         )
         return bucket_label, confidence
 
+    def _detect_faces(self, frame_bgr):
+        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
+        normalized = cv2.equalizeHist(gray)
+
+        detection_passes = (
+            (normalized, 1.08, 5, (48, 48)),
+            (normalized, 1.1, 4, (36, 36)),
+            (gray, 1.1, 3, (28, 28)),
+        )
+
+        for source, scale_factor, min_neighbors, min_size in detection_passes:
+            faces = self.face_cascade.detectMultiScale(
+                source,
+                scaleFactor=scale_factor,
+                minNeighbors=min_neighbors,
+                minSize=min_size
+            )
+            if len(faces) > 0:
+                return sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
+
+        return []
+
+    def _crop_face(self, frame_bgr, face_box):
+        x, y, w, h = [int(v) for v in face_box]
+        fh, fw = frame_bgr.shape[:2]
+        pad_x = int(w * 0.18)
+        pad_top = int(h * 0.22)
+        pad_bottom = int(h * 0.12)
+        y1, y2 = max(0, y - pad_top), min(fh, y + h + pad_bottom)
+        x1, x2 = max(0, x - pad_x), min(fw, x + w + pad_x)
+        return frame_bgr[y1:y2, x1:x2]
+
+    def _finalize_predictions(self, predictions):
+        if not predictions:
+            return dict(DEFAULT_FALLBACK)
+
+        most_common = Counter([p[0] for p in predictions]).most_common(1)[0][0]
+        age_grp = map_bucket_to_group(most_common)
+        avg_conf = sum(p[1] for p in predictions) / len(predictions)
+
+        return {
+            "success": True,
+            "age_bucket": most_common,
+            "age_group": age_grp,
+            "confidence": round(avg_conf, 4),
+            "next_step": map_group_to_next_step(age_grp),
+            "samples_used": len(predictions),
+            "fallback": False,
+        }
+
     def _is_face_centered(self, face_box, frame_shape):
         x, y, w, h = face_box
         fh, fw = frame_shape[:2]
@@ -153,7 +205,56 @@ class AgeScanner:
         dy_ratio = abs((y + h / 2) - fh / 2) / fh
         face_area_ratio = (w * h) / (fw * fh)
 
-        return dx_ratio < 0.12 and dy_ratio < 0.15 and 0.08 < face_area_ratio < 0.45
+        return dx_ratio < 0.24 and dy_ratio < 0.24 and 0.03 < face_area_ratio < 0.72
+
+    def scan_age_frames(self, frames_bgr, confidence_threshold=0.35):
+        centered_predictions = []
+        near_center_predictions = []
+        saw_face = False
+
+        for frame in frames_bgr:
+            if frame is None or getattr(frame, "size", 0) == 0:
+                continue
+
+            faces = self._detect_faces(frame)
+            if not faces:
+                continue
+
+            chosen_face = faces[0]
+            saw_face = True
+
+            face_img = self._crop_face(frame, chosen_face)
+            if face_img.size == 0:
+                continue
+
+            try:
+                bucket, conf = self.predict_face_bucket(face_img)
+                if conf < confidence_threshold:
+                    continue
+
+                if self._is_face_centered(chosen_face, frame.shape):
+                    centered_predictions.append((bucket, conf))
+                else:
+                    near_center_predictions.append((bucket, conf))
+            except Exception:
+                pass
+
+        if centered_predictions:
+            return self._finalize_predictions(centered_predictions)
+
+        if near_center_predictions:
+            result = self._finalize_predictions(near_center_predictions)
+            result["used_offcenter_face"] = True
+            result["message"] = "Captured from a slightly off-center face"
+            return result
+
+        fallback = dict(DEFAULT_FALLBACK)
+        fallback["message"] = (
+            "Face found, but move a little closer to the middle"
+            if saw_face else
+            "No face detected"
+        )
+        return fallback
 
     def scan_age_group(
         self,
@@ -183,13 +284,7 @@ class AgeScanner:
                     continue
 
                 fh, fw = frame.shape[:2]
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                faces = self.face_cascade.detectMultiScale(
-                    gray,
-                    scaleFactor=1.1,
-                    minNeighbors=5,
-                    minSize=(60, 60)
-                )
+                faces = self._detect_faces(frame)
 
                 status_text = "SCANNING"
                 instruction_text = "Please look at the camera"
@@ -206,9 +301,7 @@ class AgeScanner:
                         instruction_text = "Analyzing your age..."
                         box_color = BOX_COLOR_READY
 
-                        y1, y2 = max(0, y), min(fh, y + h)
-                        x1, x2 = max(0, x), min(fw, x + w)
-                        face_img = frame[y1:y2, x1:x2]
+                        face_img = self._crop_face(frame, chosen_face)
 
                         if face_img.size > 0:
                             try:
@@ -252,17 +345,7 @@ class AgeScanner:
             print("No face data collected — defaulting to Adult.")
             return DEFAULT_FALLBACK
 
-        most_common = Counter([p[0] for p in predictions]).most_common(1)[0][0]
-        age_grp = map_bucket_to_group(most_common)
-        avg_conf = sum(p[1] for p in predictions) / len(predictions)
-
-        return {
-            "success": True,
-            "age_group": age_grp,
-            "confidence": round(avg_conf, 4),
-            "next_step": map_group_to_next_step(age_grp),
-            "fallback": False,
-        }
+        return self._finalize_predictions(predictions)
 
 if __name__ == "__main__":
     scanner = AgeScanner()

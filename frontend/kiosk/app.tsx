@@ -173,6 +173,72 @@ const card: React.CSSProperties = {
     border: `1px solid ${C.border}`,
 }
 
+type AgeGroup = "Child" | "Adult" | "Senior"
+type CameraMode = "pi" | "app"
+type AgeCameraMode = "preview" | "legacy"
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+type FaceBox = {
+    x: number
+    y: number
+    w: number
+    h: number
+}
+
+const AGE_GUIDE = {
+    x: 0.23,
+    y: 0.16,
+    w: 0.54,
+    h: 0.68,
+}
+
+function normalizeFaceBox(box: Partial<FaceBox> | null | undefined) {
+    if (!box) return null
+
+    const x = Number(box.x)
+    const y = Number(box.y)
+    const w = Number(box.w)
+    const h = Number(box.h)
+
+    if (![x, y, w, h].every(Number.isFinite)) return null
+    return { x, y, w, h }
+}
+
+function isFaceInsideAgeGuide(faceBox: FaceBox | null) {
+    if (!faceBox) return false
+
+    const faceCenterX = faceBox.x + faceBox.w / 2
+    const faceCenterY = faceBox.y + faceBox.h / 2
+    const faceArea = faceBox.w * faceBox.h
+
+    const centerInside =
+        faceCenterX >= AGE_GUIDE.x &&
+        faceCenterX <= AGE_GUIDE.x + AGE_GUIDE.w &&
+        faceCenterY >= AGE_GUIDE.y &&
+        faceCenterY <= AGE_GUIDE.y + AGE_GUIDE.h
+
+    const overlapW = Math.max(
+        0,
+        Math.min(faceBox.x + faceBox.w, AGE_GUIDE.x + AGE_GUIDE.w) - Math.max(faceBox.x, AGE_GUIDE.x),
+    )
+    const overlapH = Math.max(
+        0,
+        Math.min(faceBox.y + faceBox.h, AGE_GUIDE.y + AGE_GUIDE.h) - Math.max(faceBox.y, AGE_GUIDE.y),
+    )
+    const overlapRatio = faceBox.w * faceBox.h > 0 ? (overlapW * overlapH) / (faceBox.w * faceBox.h) : 0
+
+    return centerInside && overlapRatio >= 0.55 && faceArea >= 0.02 && faceArea <= 0.78
+}
+
+function arrayBufferToBase64(buf: ArrayBuffer) {
+    const bytes = new Uint8Array(buf)
+    let binary = ""
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i])
+    }
+    return btoa(binary)
+}
+
 // ── Logo ───────────────────────────────────────────────────────
 function Logo({ size = 28 }: { size?: number }) {
     return (
@@ -210,9 +276,455 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
     )
 }
 
-// ── Live Camera Preview ────────────────────────────────────────
-// Shows live webcam so patient can frame their health card.
-// onCapture fires with a base64 JPEG string when patient clicks Scan.
+// ── Live Camera Preview (Age Detection) ───────────────────────
+function AgeCamera({
+    onDetected,
+    mode = "preview",
+}: {
+    onDetected: (group: AgeGroup) => void
+    mode?: AgeCameraMode
+}) {
+    const AUTO_SCAN_STEPS = 1
+    const frameUrlRef = useRef<string | null>(null)
+    const autoTriggeredRef = useRef(false)
+    const alignedStepsRef = useRef(0)
+    const cooldownUntilRef = useRef(0)
+    const readyRef = useRef(false)
+    const analyzingRef = useRef(false)
+
+    const [ready, setReady] = useState(false)
+    const [camErr, setCamErr] = useState<string | null>(null)
+    const [analyzing, setAnalyzing] = useState(false)
+    const [message, setMessage] = useState("Connecting to Pi camera...")
+    const [attempt, setAttempt] = useState(0)
+    const [guideState, setGuideState] = useState<"adjust" | "aligned">("adjust")
+    const [faceBox, setFaceBox] = useState<FaceBox | null>(null)
+    const [autoScanProgress, setAutoScanProgress] = useState(0)
+    const [frameUrl, setFrameUrl] = useState<string | null>(null)
+
+    const logCamera = (event: string, details: Record<string, unknown> = {}) => {
+        console.log("[AgeCamera]", event, details)
+        void fetch(`${PI_SERVER}/camera-debug`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ event, details }),
+        }).catch(() => undefined)
+    }
+
+    const clearFrameUrl = () => {
+        if (frameUrlRef.current) {
+            URL.revokeObjectURL(frameUrlRef.current)
+            frameUrlRef.current = null
+        }
+    }
+
+    const parseFaceFromHeaders = (res: Response) => {
+        const num = (key: string) => {
+            const v = res.headers.get(key)
+            if (v === null || v === "") return null
+            const n = Number(v)
+            return Number.isFinite(n) ? n : null
+        }
+        return normalizeFaceBox({
+            x: num("X-Face-Box-X") ?? undefined,
+            y: num("X-Face-Box-Y") ?? undefined,
+            w: num("X-Face-Box-W") ?? undefined,
+            h: num("X-Face-Box-H") ?? undefined,
+        })
+    }
+
+    const startScan = async ({ autoTriggered = false, aligned = false, force = false } = {}) => {
+        if (((!readyRef.current || camErr) && !force) || analyzingRef.current) return false
+
+        analyzingRef.current = true
+        setAnalyzing(true)
+        setAutoScanProgress(AUTO_SCAN_STEPS)
+        setMessage(force ? "Opening Pi camera window..." : "Analyzing age...")
+
+        try {
+            logCamera("scan_begin", {
+                auto_triggered: autoTriggered,
+                aligned,
+                force,
+                mode: force ? "pi_legacy_window" : "pi_camera",
+            })
+            const res = await fetch(`${PI_SERVER}/scan-age`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            })
+
+            let data: Record<string, unknown> = {}
+            try { data = await res.json() } catch { data = {} }
+            logCamera("scan_response", data)
+
+            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : `Scan failed (${res.status})`)
+
+            if (data.success && !data.fallback && data.age_group) {
+                onDetected(data.age_group as AgeGroup)
+                return true
+            }
+
+            setMessage(
+                typeof data.message === "string"
+                    ? data.message
+                    : data.fallback
+                        ? "Face seen, but age read was unclear. Try again."
+                        : "Could not detect age. Please choose manually or retry."
+            )
+            cooldownUntilRef.current = Date.now() + 600
+            autoTriggeredRef.current = false
+            alignedStepsRef.current = 0
+            setAutoScanProgress(0)
+            return false
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : "Age scan failed. Please choose manually or retry."
+            setMessage(msg)
+            cooldownUntilRef.current = Date.now() + 600
+            autoTriggeredRef.current = false
+            alignedStepsRef.current = 0
+            setAutoScanProgress(0)
+            logCamera("scan_error", { error: msg })
+            return false
+        } finally {
+            analyzingRef.current = false
+            setAnalyzing(false)
+        }
+    }
+
+    useEffect(() => {
+        if (mode === "legacy") {
+            readyRef.current = false
+            analyzingRef.current = false
+            autoTriggeredRef.current = false
+            alignedStepsRef.current = 0
+            cooldownUntilRef.current = 0
+            setReady(false)
+            setCamErr(null)
+            setGuideState("adjust")
+            setFaceBox(null)
+            setAutoScanProgress(0)
+            setMessage("Tap the green button to open the Raspberry Pi camera window.")
+            clearFrameUrl()
+            return
+        }
+
+        let cancelled = false
+
+        readyRef.current = false
+        analyzingRef.current = false
+        autoTriggeredRef.current = false
+        alignedStepsRef.current = 0
+        cooldownUntilRef.current = 0
+        setReady(false)
+        setCamErr(null)
+        setGuideState("adjust")
+        setFaceBox(null)
+        setAutoScanProgress(0)
+        setMessage("Connecting to Pi camera...")
+
+        const loop = async () => {
+            while (!cancelled) {
+                try {
+                    const res = await fetch(`${PI_SERVER}/camera-frame?ts=${Date.now()}`, { cache: "no-store" })
+                    if (!res.ok) {
+                        throw new Error(res.headers.get("X-Camera-Error") || `Camera unavailable (${res.status})`)
+                    }
+
+                    const buf = await res.arrayBuffer()
+                    const blob = new Blob([buf], { type: "image/jpeg" })
+                    const url = URL.createObjectURL(blob)
+                    clearFrameUrl()
+                    frameUrlRef.current = url
+                    setFrameUrl(url)
+
+                    readyRef.current = true
+                    setReady(true)
+                    setCamErr(null)
+                    setMessage("Place your face inside the highlighted area.")
+
+                    const faceDetected = res.headers.get("X-Face-Detected") === "1"
+                    const faceCentered = res.headers.get("X-Face-Centered") === "1"
+                    const box = parseFaceFromHeaders(res)
+                    setFaceBox(box)
+                    const faceInGuide = isFaceInsideAgeGuide(box)
+                    const aligned = faceDetected && (faceCentered || faceInGuide)
+                    setGuideState(aligned ? "aligned" : "adjust")
+
+                    if (!aligned) {
+                        alignedStepsRef.current = 0
+                        autoTriggeredRef.current = false
+                        setAutoScanProgress(0)
+                        setMessage(
+                            faceDetected
+                                ? "Move your face into the highlighted area."
+                                : "Place your face inside the highlighted area."
+                        )
+                    } else {
+                        if (Date.now() < cooldownUntilRef.current) {
+                            setAutoScanProgress(0)
+                            setMessage("Hold your face in the box...")
+                            await sleep(150)
+                            continue
+                        }
+
+                        const nextSteps = Math.min(alignedStepsRef.current + 1, AUTO_SCAN_STEPS)
+                        alignedStepsRef.current = nextSteps
+                        setAutoScanProgress(nextSteps)
+
+                        if (nextSteps < AUTO_SCAN_STEPS) {
+                            setMessage("Face aligned. Hold still for auto scan...")
+                        } else if (!autoTriggeredRef.current) {
+                            autoTriggeredRef.current = true
+                            setMessage("Face aligned. Capturing automatically...")
+                            logCamera("auto_scan_triggered", { steps: nextSteps })
+                            await sleep(60)
+                            if (cancelled) return
+                            await startScan({ autoTriggered: true, aligned: true })
+                            if (cancelled) return
+                            await sleep(120)
+                            continue
+                        }
+                    }
+
+                    await sleep(220)
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : "Camera unavailable"
+                    if (cancelled) break
+                    readyRef.current = false
+                    setReady(false)
+                    setCamErr(msg)
+                    setGuideState("adjust")
+                    setFaceBox(null)
+                    setAutoScanProgress(0)
+                    setMessage(msg)
+                    logCamera("camera_error", { error: msg })
+                    await sleep(450)
+                }
+            }
+        }
+
+        void loop()
+
+        return () => {
+            cancelled = true
+            clearFrameUrl()
+        }
+    }, [attempt, mode])
+
+    if (mode === "legacy") {
+        return (
+            <div style={{ marginBottom: 12 }}>
+                <div style={{
+                    position: "relative", borderRadius: 14, overflow: "hidden",
+                    background: "#0F172A", minHeight: 250, marginBottom: 14,
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    padding: 24, textAlign: "center", gap: 12,
+                }}>
+                    <div style={{
+                        width: 64, height: 64, borderRadius: 20,
+                        background: "rgba(37,99,235,0.18)", color: "#BFDBFE",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 20, fontWeight: 800,
+                    }}>
+                        PI
+                    </div>
+                    <div style={{ color: "#F8FAFC", fontSize: 18, fontWeight: 700 }}>
+                        Raspberry Pi Camera Window
+                    </div>
+                    <p style={{ color: "#94A3B8", fontSize: 14, lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                        This opens the fullscreen Pi camera screen on the Raspberry Pi, scans there, and sends the age result back into this app.
+                    </p>
+                </div>
+
+                <div style={{
+                    background: "#F8FAFC", border: `1px solid ${C.border}`, borderRadius: 12,
+                    padding: "12px 14px", marginBottom: 12, textAlign: "center",
+                    color: C.gray, fontSize: 14,
+                }}>
+                    {message}
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                        onClick={() => { void startScan({ force: true }) }}
+                        disabled={analyzing}
+                        style={{
+                            ...btn(analyzing ? C.border : C.green, analyzing ? C.gray : "#fff"),
+                            width: "100%",
+                        }}
+                    >
+                        {analyzing ? "Analyzing..." : "Open Pi Camera Window"}
+                    </button>
+                </div>
+
+                <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "12px 0 0" }}>
+                    This uses the legacy Raspberry Pi/OpenCV scan instead of the in-app preview.
+                </p>
+            </div>
+        )
+    }
+
+    return (
+        <div style={{ marginBottom: 12 }}>
+            <div style={{
+                position: "relative", borderRadius: 14, overflow: "hidden",
+                background: "#0F172A", height: 250, marginBottom: 14,
+            }}>
+                {camErr ? (
+                    <div style={{
+                        height: "100%", display: "flex", flexDirection: "column",
+                        alignItems: "center", justifyContent: "center", gap: 8, padding: 16,
+                    }}>
+                        <span style={{ color: "#CBD5E1", fontSize: 16, fontWeight: 700, textAlign: "center" }}>Camera unavailable</span>
+                        <span style={{ color: "#94A3B8", fontSize: 12, textAlign: "center" }}>{camErr}</span>
+                        <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                            <button
+                                onClick={() => { void startScan({ force: true }) }}
+                                disabled={analyzing}
+                                style={{ ...btn(C.green), width: "auto", padding: "10px 20px", fontSize: 14 }}
+                            >
+                                Use Pi Camera Window
+                            </button>
+                            <button
+                                onClick={() => setAttempt(a => a + 1)}
+                                disabled={analyzing}
+                                style={{ ...btn(C.blue), width: "auto", padding: "10px 20px", fontSize: 14 }}
+                            >
+                                Retry Camera
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {frameUrl && (
+                            <img
+                                src={frameUrl}
+                                alt="Kiosk camera preview"
+                                style={{
+                                    width: "100%", height: "100%", objectFit: "cover", display: "block",
+                                    opacity: ready ? 1 : 0,
+                                    transition: "opacity 0.3s",
+                                }}
+                            />
+                        )}
+
+                        <div style={{
+                            position: "absolute", inset: 0, display: "flex",
+                            alignItems: "center", justifyContent: "center", pointerEvents: "none",
+                        }}>
+                            <div style={{
+                                width: `${AGE_GUIDE.w * 100}%`,
+                                height: `${AGE_GUIDE.h * 100}%`,
+                                border: guideState === "aligned"
+                                    ? `4px solid ${C.green}`
+                                    : "3px dashed rgba(191,219,254,0.95)",
+                                borderRadius: 24,
+                                boxShadow: "0 0 0 9999px rgba(0,0,0,0.28)",
+                            }} />
+                            <div style={{
+                                position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+                                background: guideState === "aligned" ? "rgba(34,197,94,0.9)" : "rgba(15,23,42,0.78)",
+                                color: "#fff", padding: "8px 12px", borderRadius: 999,
+                                fontSize: 12, fontWeight: 700, letterSpacing: 0.2, whiteSpace: "nowrap",
+                            }}>
+                                {guideState === "aligned" ? "Face in position" : "Place face inside area"}
+                            </div>
+                            {faceBox && (
+                                <div style={{
+                                    position: "absolute",
+                                    left: `${faceBox.x * 100}%`,
+                                    top: `${faceBox.y * 100}%`,
+                                    width: `${faceBox.w * 100}%`,
+                                    height: `${faceBox.h * 100}%`,
+                                    border: `2px solid ${guideState === "aligned" ? "#86EFAC" : "#60A5FA"}`,
+                                    borderRadius: 16,
+                                }} />
+                            )}
+                        </div>
+
+                        {!ready && (
+                            <div style={{
+                                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                                alignItems: "center", justifyContent: "center", gap: 10,
+                            }}>
+                                <CameraSpinner />
+                                <span style={{ color: "#94A3B8", fontSize: 14 }}>{message}</span>
+                            </div>
+                        )}
+
+                        {analyzing && (
+                            <div style={{
+                                position: "absolute", inset: 0, display: "flex",
+                                alignItems: "center", justifyContent: "center",
+                                background: "rgba(15,23,42,0.34)",
+                            }}>
+                                <div style={{
+                                    background: "rgba(255,255,255,0.92)",
+                                    color: C.slate, padding: "12px 18px",
+                                    borderRadius: 12, fontSize: 14, fontWeight: 700,
+                                }}>
+                                    Analyzing...
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            <div style={{
+                background: "#F8FAFC", border: `1px solid ${C.border}`, borderRadius: 12,
+                padding: "12px 14px", marginBottom: 12, textAlign: "center",
+                color: C.gray, fontSize: 14,
+            }}>
+                {message}
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+                <div style={{
+                    height: 6,
+                    background: C.border,
+                    borderRadius: 999,
+                    overflow: "hidden",
+                }}>
+                    <div style={{
+                        height: "100%",
+                        width: `${(autoScanProgress / AUTO_SCAN_STEPS) * 100}%`,
+                        background: guideState === "aligned" ? C.green : C.blue,
+                        borderRadius: 999,
+                        transition: "width 0.2s ease",
+                    }} />
+                </div>
+                <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "8px 0 0" }}>
+                    Photo captures automatically as soon as your face hits the green box.
+                </p>
+            </div>
+
+            <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
+                Preview frames are temporary. This step saves only the age result, not a photo.
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+                <button
+                    onClick={() => {
+                        cooldownUntilRef.current = 0
+                        alignedStepsRef.current = 0
+                        autoTriggeredRef.current = false
+                        setAutoScanProgress(0)
+                        setAttempt(a => a + 1)
+                    }}
+                    disabled={analyzing}
+                    style={{
+                        ...btn("transparent", C.slate, `1px solid ${C.border}`),
+                        width: "100%",
+                    }}
+                >
+                    Refresh
+                </button>
+            </div>
+        </div>
+    )
+}
+// ── Card scan camera ───────────────────────────────────────────
 function LiveCamera({
     onCapture,
     scanning,
@@ -222,35 +734,83 @@ function LiveCamera({
     scanning: boolean
     t: Record<string, string>
 }) {
-    const videoRef = useRef<HTMLVideoElement>(null)
-    const streamRef = useRef<MediaStream | null>(null)
+    const frameUrlRef = useRef<string | null>(null)
+    const frameB64Ref = useRef<string | null>(null)
+    const [frameUrl, setFrameUrl] = useState<string | null>(null)
     const [ready, setReady] = useState(false)
-    const [camErr, setCamErr] = useState(false)
+    const [camErr, setCamErr] = useState<string | null>(null)
+    const [attempt, setAttempt] = useState(0)
+    const [status, setStatus] = useState("Connecting to Pi camera...")
 
     useEffect(() => {
-        navigator.mediaDevices
-            .getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => {
-                streamRef.current = stream
-                if (videoRef.current) {
-                    videoRef.current.srcObject = stream
-                    videoRef.current.play()
-                    setReady(true)
-                }
-            })
-            .catch(() => setCamErr(true))
-
-        return () => streamRef.current?.getTracks().forEach(tr => tr.stop())
+        return () => {
+            if (frameUrlRef.current) URL.revokeObjectURL(frameUrlRef.current)
+            frameUrlRef.current = null
+            frameB64Ref.current = null
+        }
     }, [])
 
-    const capture = () => {
-        if (!videoRef.current || scanning) return
-        const canvas = document.createElement("canvas")
-        canvas.width = videoRef.current.videoWidth || 640
-        canvas.height = videoRef.current.videoHeight || 480
-        canvas.getContext("2d")!.drawImage(videoRef.current, 0, 0)
-        streamRef.current?.getTracks().forEach(tr => tr.stop())
-        const b64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1]
+    useEffect(() => {
+        if (scanning) return
+
+        let cancelled = false
+
+        const previewLoop = async () => {
+            while (!cancelled) {
+                try {
+                    setStatus("Connecting to Pi camera...")
+                    const res = await fetch(`${PI_SERVER}/camera-frame?ts=${Date.now()}`, { cache: "no-store" })
+                    if (!res.ok) {
+                        throw new Error(res.headers.get("X-Camera-Error") || `Camera unavailable (${res.status})`)
+                    }
+
+                    const buf = await res.arrayBuffer()
+                    const blob = new Blob([buf], { type: "image/jpeg" })
+                    const url = URL.createObjectURL(blob)
+                    const b64 = arrayBufferToBase64(buf)
+
+                    if (frameUrlRef.current) URL.revokeObjectURL(frameUrlRef.current)
+                    frameUrlRef.current = url
+                    frameB64Ref.current = b64
+                    setFrameUrl(url)
+
+                    setReady(true)
+                    setCamErr(null)
+                    setStatus("Position your card inside the guide.")
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : "Camera unavailable"
+                    if (cancelled) break
+                    if (frameUrlRef.current) {
+                        URL.revokeObjectURL(frameUrlRef.current)
+                        frameUrlRef.current = null
+                    }
+                    frameB64Ref.current = null
+                    setFrameUrl(null)
+                    setCamErr(msg)
+                    setReady(false)
+                    setStatus(msg)
+                    await sleep(450)
+                    continue
+                }
+
+                await sleep(220)
+            }
+        }
+
+        void previewLoop()
+
+        return () => {
+            cancelled = true
+        }
+    }, [attempt, scanning])
+
+    const capture = async () => {
+        if (scanning || !ready || camErr) return
+        const b64 = frameB64Ref.current
+        if (!b64) {
+            setStatus("Camera not ready yet")
+            return
+        }
         onCapture(b64)
     }
 
@@ -260,7 +820,6 @@ function LiveCamera({
                 {t.positionCard}
             </p>
 
-            {/* Live video with card alignment guide overlay */}
             <div style={{
                 position: "relative", borderRadius: 14, overflow: "hidden",
                 background: "#0F172A", height: 230, marginBottom: 12,
@@ -270,21 +829,23 @@ function LiveCamera({
                         height: "100%", display: "flex", flexDirection: "column",
                         alignItems: "center", justifyContent: "center", gap: 8,
                     }}>
-                        <span style={{ fontSize: 32 }}>📷</span>
-                        <span style={{ color: "#64748B", fontSize: 13 }}>Camera unavailable</span>
+                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>Camera unavailable</span>
+                        <span style={{ color: "#64748B", fontSize: 13 }}>Refresh the page or reconnect the camera.</span>
                     </div>
                 ) : (
                     <>
-                        <video
-                            ref={videoRef}
-                            muted
-                            playsInline
-                            style={{
-                                width: "100%", height: "100%", objectFit: "cover",
-                                opacity: ready ? 1 : 0.2, transition: "opacity 0.4s",
-                            }}
-                        />
-                        {/* Dashed card-framing guide */}
+                        {frameUrl && (
+                            <img
+                                src={frameUrl}
+                                alt="Kiosk card camera"
+                                style={{
+                                    width: "100%", height: "100%", objectFit: "cover",
+                                    opacity: ready ? 1 : 0,
+                                    transition: "opacity 0.4s",
+                                    display: "block",
+                                }}
+                            />
+                        )}
                         <div style={{
                             position: "absolute", inset: 0, display: "flex",
                             alignItems: "center", justifyContent: "center", pointerEvents: "none",
@@ -298,36 +859,196 @@ function LiveCamera({
                         </div>
                         {!ready && (
                             <div style={{
-                                position: "absolute", inset: 0, display: "flex",
-                                alignItems: "center", justifyContent: "center",
+                                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                                alignItems: "center", justifyContent: "center", gap: 10,
                             }}>
-                                <span style={{ color: "#94A3B8", fontSize: 14 }}>Starting camera…</span>
+                                <CameraSpinner />
+                                <span style={{ color: "#94A3B8", fontSize: 14 }}>{status}</span>
                             </div>
                         )}
                     </>
                 )}
             </div>
 
-            {/* Scan button — triggers capture + Gemini OCR */}
+            <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
+                Preview frames are temporary. A card image is sent only when you tap Scan.
+            </p>
+
+            <div style={{ display: "flex", gap: 10 }}>
+                <button
+                    onClick={() => { void capture() }}
+                    disabled={scanning || !ready || !!camErr}
+                    style={btn(
+                        scanning || !ready || !!camErr ? C.border : C.blue,
+                        scanning || !ready || !!camErr ? C.gray : "#fff",
+                    )}
+                >
+                    {scanning ? t.scanning : t.scanBtn}
+                </button>
+                <button
+                    onClick={() => setAttempt(a => a + 1)}
+                    disabled={scanning}
+                    style={{
+                        ...btn("transparent", C.slate, `1px solid ${C.border}`),
+                        width: 150, flexShrink: 0,
+                    }}
+                >
+                    Refresh
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ── Spinner shown while camera is initialising ─────────────────
+function BrowserCardCamera({
+    onCapture,
+    scanning,
+    t,
+}: {
+    onCapture: (b64: string) => void
+    scanning: boolean
+    t: Record<string, string>
+}) {
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const streamRef = useRef<MediaStream | null>(null)
+    const [ready, setReady] = useState(false)
+    const [camErr, setCamErr] = useState<string | null>(null)
+
+    useEffect(() => {
+        let active = true
+
+        navigator.mediaDevices
+            .getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                if (!active) {
+                    stream.getTracks().forEach(track => track.stop())
+                    return
+                }
+
+                streamRef.current = stream
+                if (videoRef.current) {
+                    videoRef.current.srcObject = stream
+                    void videoRef.current.play()
+                }
+                setReady(true)
+                setCamErr(null)
+            })
+            .catch(() => {
+                if (!active) return
+                setCamErr("Browser camera permission was blocked or unavailable.")
+            })
+
+        return () => {
+            active = false
+            streamRef.current?.getTracks().forEach(track => track.stop())
+            streamRef.current = null
+        }
+    }, [])
+
+    const capture = () => {
+        if (!videoRef.current || scanning) return
+
+        const canvas = document.createElement("canvas")
+        canvas.width = videoRef.current.videoWidth || 640
+        canvas.height = videoRef.current.videoHeight || 480
+        canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0)
+        const b64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1]
+        onCapture(b64)
+    }
+
+    return (
+        <div style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: 13, color: C.gray, textAlign: "center", marginBottom: 10 }}>
+                {t.positionCard}
+            </p>
+
+            <div style={{
+                position: "relative", borderRadius: 14, overflow: "hidden",
+                background: "#0F172A", height: 230, marginBottom: 12,
+            }}>
+                {camErr ? (
+                    <div style={{
+                        height: "100%", display: "flex", flexDirection: "column",
+                        alignItems: "center", justifyContent: "center", gap: 8, padding: 16,
+                    }}>
+                        <span style={{ color: "#CBD5E1", fontSize: 18, fontWeight: 700 }}>Camera unavailable</span>
+                        <span style={{ color: "#64748B", fontSize: 13, textAlign: "center" }}>{camErr}</span>
+                    </div>
+                ) : (
+                    <>
+                        <video
+                            ref={videoRef}
+                            muted
+                            playsInline
+                            style={{
+                                width: "100%", height: "100%", objectFit: "cover",
+                                opacity: ready ? 1 : 0.2, transition: "opacity 0.4s",
+                            }}
+                        />
+                        <div style={{
+                            position: "absolute", inset: 0, display: "flex",
+                            alignItems: "center", justifyContent: "center", pointerEvents: "none",
+                        }}>
+                            <div style={{
+                                width: "78%", height: "56%",
+                                border: "2.5px dashed rgba(255,255,255,0.55)",
+                                borderRadius: 10,
+                                boxShadow: "0 0 0 9999px rgba(0,0,0,0.28)",
+                            }} />
+                        </div>
+                        {!ready && (
+                            <div style={{
+                                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                                alignItems: "center", justifyContent: "center", gap: 10,
+                            }}>
+                                <CameraSpinner />
+                                <span style={{ color: "#94A3B8", fontSize: 14 }}>Starting app camera...</span>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+
+            <p style={{ fontSize: 12, color: C.gray, textAlign: "center", margin: "0 0 12px" }}>
+                This mode uses the browser camera on the current device.
+            </p>
+
             <button
                 onClick={camErr ? undefined : capture}
-                disabled={scanning || (!ready && !camErr)}
-                style={btn(scanning ? C.border : C.blue, scanning ? C.gray : "#fff")}
+                disabled={scanning || !ready || !!camErr}
+                style={btn(
+                    scanning || !ready || !!camErr ? C.border : C.blue,
+                    scanning || !ready || !!camErr ? C.gray : "#fff",
+                )}
             >
-                {scanning ? `🔍 ${t.scanning}` : `📷 ${t.scanBtn}`}
+                {scanning ? t.scanning : t.scanBtn}
             </button>
         </div>
     )
 }
 
+function CameraSpinner() {
+    return (
+        <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            border: `3px solid rgba(148,163,184,0.3)`,
+            borderTopColor: "#60A5FA",
+            animation: "spin 0.9s linear infinite",
+        }}>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+    )
+}
+
 // ── Main App ───────────────────────────────────────────────────
-type Step = "language" | "age" | "card" | "questions" | "complete"
+type Step = "language" | "camera" | "age" | "card" | "questions" | "complete"
 
 export default function KioskApp() {
     const [step, setStep] = useState<Step>("language")
     const [lang, setLang] = useState("en")
-    const [ageGroup, setAgeGroup] = useState<"Child" | "Adult" | "Senior" | null>(null)
-    const [ageCountdown, setAgeCountdown] = useState(3)
+    const [cameraMode, setCameraMode] = useState<CameraMode | null>(null)
+    const [ageGroup, setAgeGroup] = useState<AgeGroup | null>(null)
     const [cardMode, setCardMode] = useState<"scan" | "manual">("scan")
     const [scanningCard, setScanningCard] = useState(false)
     const [manualName, setManualName] = useState("")
@@ -342,32 +1063,10 @@ export default function KioskApp() {
     const isRTL = LANGUAGES.find(l => l.code === lang)?.dir === "rtl"
     const fs = ageGroup === "Senior" ? 1.15 : 1
 
-    // ── Pi age detection: countdown → POST /scan-age ──────────────
-    useEffect(() => {
-        if (step !== "age") return
-        const iv = setInterval(() => {
-            setAgeCountdown(c => {
-                if (c <= 1) {
-                    clearInterval(iv)
-                    // Pi FastAPI (port 8000) wraps detect_age_pi.py
-                    // Returns: { success, age_group, confidence, next_step, fallback }
-                    fetch(`${PI_SERVER}/scan-age`, { method: "POST" })
-                        .then(r => r.json())
-                        .then(d => setAgeGroup((d.age_group as "Child" | "Adult" | "Senior") || "Adult"))
-                        .catch(() => setAgeGroup("Adult"))
-                    return 0
-                }
-                return c - 1
-            })
-        }, 1000)
-        return () => clearInterval(iv)
-    }, [step])
-
     useEffect(() => {
         if (ageGroup && step === "age") setTimeout(() => setStep("card"), 700)
     }, [ageGroup])
 
-    // ── TTS: calls Flask /speak ────────────────────────────────────
     const speak = async (text: string) => {
         try {
             await fetch(`${AI_SERVER}/speak`, {
@@ -378,7 +1077,6 @@ export default function KioskApp() {
         } catch { }
     }
 
-    // ── Card capture → Flask /scan-card (Gemini Vision OCR) ────────
     const handleCardCapture = async (b64: string) => {
         setScanningCard(true)
         try {
@@ -388,7 +1086,6 @@ export default function KioskApp() {
                 body: JSON.stringify({ image: b64 }),
             })
             const d = await res.json()
-            // Server returns: { name, health_id }
             setPatientName(d.name !== "Unknown" ? d.name : "")
             setHealthId(d.health_id !== "N/A" ? d.health_id : "")
         } catch { }
@@ -397,7 +1094,6 @@ export default function KioskApp() {
         speak(TRIAGE_Q[lang]?.[QUESTION_IDS[0]] || TRIAGE_Q.en[QUESTION_IDS[0]])
     }
 
-    // ── Answer yes/no, advance or submit ──────────────────────────
     const handleAnswer = async (id: string, val: boolean) => {
         const newAnswers = { ...answers, [id]: val }
         setAnswers(newAnswers)
@@ -409,9 +1105,6 @@ export default function KioskApp() {
                 speak(TRIAGE_Q[lang]?.[nextId] || TRIAGE_Q.en[nextId])
             }, 250)
         } else {
-            // All 7 answered → POST to Flask /queue
-            // Server scores priority + stores in Supabase
-            // Patient NEVER sees priority (complete screen just says "take a seat")
             setSubmitting(true)
             try {
                 await fetch(`${AI_SERVER}/queue`, {
@@ -431,16 +1124,11 @@ export default function KioskApp() {
         }
     }
 
-    // ── Reset for next patient ─────────────────────────────────────
     const reset = () => {
-        setStep("language"); setLang("en"); setAgeGroup(null); setAgeCountdown(3)
+        setStep("language"); setLang("en"); setCameraMode(null); setAgeGroup(null)
         setManualName(""); setManualId(""); setPatientName(""); setHealthId("")
         setQIndex(0); setAnswers({}); setCardMode("scan"); setScanningCard(false)
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // RENDER
-    // ─────────────────────────────────────────────────────────────
 
     if (step === "language") return (
         <Screen rtl={isRTL}>
@@ -455,7 +1143,7 @@ export default function KioskApp() {
                 {LANGUAGES.map(l => (
                     <button
                         key={l.code}
-                        onClick={() => { setLang(l.code); setStep("age") }}
+                        onClick={() => { setLang(l.code); setCameraMode(null); setStep("camera") }}
                         style={{
                             background: C.white, border: `2px solid ${C.border}`, borderRadius: 16,
                             padding: "20px 10px", cursor: "pointer", textAlign: "center",
@@ -473,16 +1161,98 @@ export default function KioskApp() {
         </Screen>
     )
 
+    if (step === "camera") return (
+        <Screen rtl={isRTL}>
+            <div style={{ ...card, textAlign: "center", marginBottom: 16 }}>
+                <div style={{
+                    width: 52, height: 52, margin: "0 auto 14px",
+                    borderRadius: 16, background: C.blueLight,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: C.blue, fontSize: 18, fontWeight: 800,
+                }}>
+                    CAM
+                </div>
+                <h2 style={{ fontSize: 22 * fs, fontWeight: 700, color: C.slate, margin: "0 0 10px" }}>
+                    Choose Camera Mode
+                </h2>
+                <p style={{ color: C.gray, fontSize: 15, lineHeight: 1.5, margin: 0 }}>
+                    Pick how you want to scan. Pi camera uses the Raspberry Pi fullscreen age scanner first, while app camera keeps everything on this device with manual age selection.
+                </p>
+            </div>
+
+            <div style={{ display: "grid", gap: 12 }}>
+                <button
+                    onClick={() => { setCameraMode("pi"); setStep("age") }}
+                    style={{
+                        ...card,
+                        textAlign: "left",
+                        cursor: "pointer",
+                        border: `2px solid ${C.blue}`,
+                        background: C.blueLight,
+                    }}
+                >
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>Pi Camera</div>
+                    <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
+                        Use the green Pi-camera button for age scanning in the fullscreen Raspberry Pi window. The health card step later still uses the Pi camera preview inside the app.
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => { setCameraMode("app"); setStep("age") }}
+                    style={{
+                        ...card,
+                        textAlign: "left",
+                        cursor: "pointer",
+                        border: `2px solid ${C.border}`,
+                    }}
+                >
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.slate, marginBottom: 6 }}>App Camera</div>
+                    <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.5 }}>
+                        Use this device browser camera for the health card step. Age will be chosen manually instead of auto-detected.
+                    </div>
+                </button>
+            </div>
+        </Screen>
+    )
+
     if (step === "age") return (
         <Screen rtl={isRTL}>
             <div style={{ ...card, textAlign: "center", marginBottom: 16 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>📷</div>
-                <p style={{ color: C.gray, fontSize: 16 * fs, marginBottom: 8 }}>{t.detecting}</p>
+                <div style={{
+                    width: 52, height: 52, margin: "0 auto 14px",
+                    borderRadius: 16, background: C.blueLight,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: C.blue, fontSize: 18, fontWeight: 800,
+                }}>
+                    AGE
+                </div>
+                <p style={{ color: C.gray, fontSize: 16 * fs, marginBottom: 8 }}>
+                    {cameraMode === "pi" ? t.detecting : "App camera mode uses manual age selection."}
+                </p>
                 {ageGroup
-                    ? <div style={{ fontSize: 32, fontWeight: 700, color: C.green }}>✓ {ageGroup}</div>
-                    : <div style={{ fontSize: 56, fontWeight: 800, color: C.blue, lineHeight: 1 }}>{ageCountdown || "…"}</div>
+                    ? <div style={{ fontSize: 32, fontWeight: 700, color: C.green }}>{ageGroup} detected</div>
+                    : <div style={{ fontSize: 16, fontWeight: 600, color: C.blue, lineHeight: 1.4 }}>
+                        {cameraMode === "pi"
+                            ? "Use the green button below to launch the Pi camera window"
+                            : "The next screen will use the app camera for health card scanning"}
+                    </div>
                 }
             </div>
+            {!ageGroup && cameraMode === "pi" && (
+                <div style={{ ...card, marginBottom: 16 }}>
+                    <AgeCamera onDetected={setAgeGroup} mode="legacy" />
+                </div>
+            )}
+            {!ageGroup && cameraMode === "app" && (
+                <div style={{ ...card, marginBottom: 16, textAlign: "center" }}>
+                    <p style={{ color: C.slate, fontSize: 16, fontWeight: 600, margin: "0 0 8px" }}>
+                        App camera mode does not auto-detect age yet.
+                    </p>
+                    <p style={{ color: C.gray, fontSize: 14, lineHeight: 1.5, margin: 0 }}>
+                        Choose the age group below, then the health card screen will use this device browser camera.
+                    </p>
+                </div>
+            )}
             <div style={{ ...card }}>
                 <p style={{ textAlign: "center", color: C.gray, marginBottom: 16, fontSize: 14 }}>{t.orManual}</p>
                 <div style={{ display: "flex", gap: 10 }}>
@@ -494,13 +1264,24 @@ export default function KioskApp() {
                             borderRadius: 12, padding: "14px 8px", cursor: "pointer",
                             display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
                         }}>
-                            <span style={{ fontSize: 24 }}>{g === "Child" ? "🧒" : g === "Adult" ? "🧑" : "👴"}</span>
+                            <span style={{
+                                minWidth: 42, padding: "4px 10px", borderRadius: 999,
+                                background: C.white, color: C.blue, fontSize: 12, fontWeight: 800, letterSpacing: 0.3,
+                            }}>
+                                {g === "Child" ? "0-17" : g === "Adult" ? "18-54" : "55+"}
+                            </span>
                             <span style={{ fontSize: 13 * fs, fontWeight: 600, color: C.slate }}>
                                 {t[g.toLowerCase() as keyof typeof t]}
                             </span>
                         </button>
                     ))}
                 </div>
+                <button
+                    onClick={() => setStep("camera")}
+                    style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 14 }}
+                >
+                    Change Camera Mode
+                </button>
             </div>
         </Screen>
     )
@@ -510,15 +1291,27 @@ export default function KioskApp() {
             <h2 style={{ fontSize: 20 * fs, fontWeight: 700, color: C.slate, marginBottom: 20, textAlign: "center" }}>
                 {t.scanCard}
             </h2>
+            <p style={{ textAlign: "center", color: C.gray, margin: "0 0 14px", fontSize: 14 }}>
+                {cameraMode === "pi"
+                    ? "Health card scan is using the Raspberry Pi camera preview inside the app."
+                    : "Health card scan is using this device browser camera."}
+            </p>
             {cardMode === "scan" ? (
                 <div style={{ ...card, marginBottom: 12 }}>
-                    {/* LiveCamera shows real webcam + card frame guide + Scan button */}
-                    <LiveCamera onCapture={handleCardCapture} scanning={scanningCard} t={t} />
+                    {cameraMode === "app"
+                        ? <BrowserCardCamera onCapture={handleCardCapture} scanning={scanningCard} t={t} />
+                        : <LiveCamera onCapture={handleCardCapture} scanning={scanningCard} t={t} />}
                     <button
                         onClick={() => setCardMode("manual")}
                         style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 4 }}
                     >
-                        ⌨️ {t.enterManual}
+                        {t.enterManual}
+                    </button>
+                    <button
+                        onClick={() => setStep("camera")}
+                        style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`), marginTop: 10 }}
+                    >
+                        Change Camera Mode
                     </button>
                 </div>
             ) : (
@@ -562,7 +1355,7 @@ export default function KioskApp() {
                         {t.submit}
                     </button>
                     <button onClick={() => setCardMode("scan")} style={{ ...btn("transparent", C.gray, `1px solid ${C.border}`) }}>
-                        ← Back to camera
+                        Back to camera
                     </button>
                 </div>
             )}
@@ -581,12 +1374,12 @@ export default function KioskApp() {
                             onClick={() => speak(qText)}
                             style={{
                                 background: C.blue, border: "none", borderRadius: 50,
-                                width: 46, height: 46, cursor: "pointer", flexShrink: 0,
+                                minWidth: 72, height: 46, cursor: "pointer", flexShrink: 0,
                                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
                             }}
                             title="Hear question aloud"
                         >
-                            🔊
+                            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>Play</span>
                         </button>
                         <p style={{ fontSize: 22 * fs, fontWeight: 600, color: C.slate, lineHeight: 1.4, margin: 0 }}>
                             {qText}
@@ -598,14 +1391,14 @@ export default function KioskApp() {
                             disabled={submitting}
                             style={{ ...btn(C.blue), flex: 1, fontSize: 20 * fs, padding: "20px", opacity: submitting ? 0.6 : 1 }}
                         >
-                            👍 {t.yes}
+                            {t.yes}
                         </button>
                         <button
                             onClick={() => handleAnswer(qId, false)}
                             disabled={submitting}
                             style={{ ...btn("#334155"), flex: 1, fontSize: 20 * fs, padding: "20px", opacity: submitting ? 0.6 : 1 }}
                         >
-                            👎 {t.no}
+                            {t.no}
                         </button>
                     </div>
                 </div>
@@ -616,11 +1409,17 @@ export default function KioskApp() {
     if (step === "complete") return (
         <Screen rtl={isRTL}>
             <div style={{ ...card, textAlign: "center", padding: 52 }}>
-                <div style={{ fontSize: 72, marginBottom: 20 }}>✅</div>
+                <div style={{
+                    width: 72, height: 72, margin: "0 auto 20px", borderRadius: "50%",
+                    background: "#DCFCE7", color: "#166534",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, fontWeight: 800,
+                }}>
+                    DONE
+                </div>
                 <h2 style={{ fontSize: 26 * fs, fontWeight: 700, color: C.slate, margin: "0 0 14px" }}>
                     {t.complete}
                 </h2>
-                {/* Priority intentionally NOT shown to patient */}
                 <p style={{ fontSize: 18 * fs, color: C.gray, lineHeight: 1.6, maxWidth: 300, margin: "0 auto 36px" }}>
                     {t.seated}
                 </p>
@@ -652,3 +1451,5 @@ function Screen({ children, rtl }: { children: React.ReactNode; rtl?: boolean })
         </div>
     )
 }
+
+
