@@ -246,10 +246,7 @@ function Logo({ size = 28 }: { size?: number }) {
             <div style={{
                 background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
                 borderRadius: 10, width: size, height: size,
-                display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-                <span style={{ color: "#fff", fontSize: size * 0.55, fontWeight: 800 }}>+</span>
-            </div>
+            }} />
             <span style={{ fontSize: size * 0.75, fontWeight: 800, letterSpacing: -0.5 }}>
                 <span style={{ color: C.blue }}>Fast</span>
                 <span style={{ color: "#EF4444" }}>ER</span>

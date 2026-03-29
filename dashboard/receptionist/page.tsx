@@ -135,9 +135,7 @@ export default function ReceptionistDashboard() {
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)", borderRadius: 10, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ color: "#fff", fontSize: 16, fontWeight: 800 }}>+</span>
-                        </div>
+                        <div style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)", borderRadius: 10, width: 32, height: 32 }} />
                         <span style={{ fontWeight: 800, fontSize: 18 }}>
                             <span style={{ color: "#2563EB" }}>Fast</span>
                             <span style={{ color: "#EF4444" }}>ER</span>
