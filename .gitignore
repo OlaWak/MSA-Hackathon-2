@@ -14,3 +14,12 @@ Thumbs.db
 .env.local
 frontend/.env.local
 dashboard/.env.local
+
+
+# Env files (SECRETS)
+.env
+*.env
+
+node_modules/
+dashboard/node_modules/
+.env
