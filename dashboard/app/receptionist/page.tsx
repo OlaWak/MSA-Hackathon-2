@@ -164,7 +164,7 @@ function QueueRow({ patient, position, onCall, calling }: { patient: Patient; po
 export default function ReceptionistDashboard() {
     const [patients, setPatients] = useState<Patient[]>([])
     const [loading, setLoading] = useState(true)
-    const [lastRefresh, setRefresh] = useState(new Date())
+    const [lastRefresh, setRefresh] = useState<Date | null>(null)
     const [calledIds, setCalledIds] = useState<Set<number>>(new Set())
     const [lastCount, setLastCount] = useState(0)
 
@@ -231,7 +231,7 @@ export default function ReceptionistDashboard() {
                     <button onClick={fetchQueue} style={{ background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: 8, padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#64748B" }}>
                         <RefreshCw size={12} /> Refresh
                     </button>
-                    <span style={{ fontSize: 11, color: "#94A3B8" }}>{lastRefresh.toLocaleTimeString()}</span>
+                    <span style={{ fontSize: 11, color: "#94A3B8" }}>{lastRefresh ? lastRefresh.toLocaleTimeString() : "--"}</span>
                 </div>
             </div>
 
