@@ -43,6 +43,42 @@ DEFAULT_FALLBACK = {
     "fallback": True,
 }
 
+
+def open_scan_camera():
+    preferred_indices = [CAMERA_INDEX, 1, 2, 3]
+    seen = set()
+    api_preference = cv2.CAP_V4L2 if hasattr(cv2, "CAP_V4L2") else cv2.CAP_ANY
+
+    for camera_index in preferred_indices:
+        if camera_index in seen:
+            continue
+        seen.add(camera_index)
+
+        cap = cv2.VideoCapture(camera_index, api_preference)
+        try:
+            if hasattr(cv2, "CAP_PROP_BUFFERSIZE"):
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+            if not cap.isOpened():
+                cap.release()
+                continue
+
+            frame = None
+            for _ in range(8):
+                ret, candidate = cap.read()
+                if ret and candidate is not None and getattr(candidate, "size", 0) > 0:
+                    frame = candidate
+
+            if frame is not None:
+                return cap, camera_index
+        except Exception:
+            cap.release()
+            raise
+
+        cap.release()
+
+    return None, None
+
 def load_labels(path):
     try:
         with open(path, "r") as f:
@@ -263,9 +299,9 @@ class AgeScanner:
         show_ui=True,
         timeout_seconds=20
     ):
-        cap = cv2.VideoCapture(CAMERA_INDEX)
+        cap, camera_index = open_scan_camera()
 
-        if not cap.isOpened():
+        if cap is None:
             print("Camera error — defaulting to Adult.")
             return DEFAULT_FALLBACK
 
@@ -278,6 +314,7 @@ class AgeScanner:
             cv2.setWindowProperty("Age Scan", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         try:
+            print(f"Using camera index {camera_index} for age scan.")
             while True:
                 ret, frame = cap.read()
                 if not ret or frame is None:
